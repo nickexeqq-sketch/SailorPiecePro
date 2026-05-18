@@ -210,7 +210,7 @@ function library.new(library_title, cfg_location)
 
     local UIConstraint = library:create("UIScale", {Name = "MenuScale"}, ImageLabel)
     if uis.TouchEnabled then
-        UIConstraint.Scale = 0.85
+        UIConstraint.Scale = 0.65
     end
 
     function menu.GetPosition()
@@ -269,7 +269,7 @@ function library.new(library_title, cfg_location)
         local TabImage = library:create("ImageLabel", {
             AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundTransparency = 1,
-            Position = UDim2.new(0.5, 0, 0.5, 0),
+            Position = UDim2.new(0.5, 0.5),
             Size = UDim2.new(0, 32, 0, 32),
             Image = tab_image,
             ImageColor3 = Color3.fromRGB(100, 100, 100),
@@ -513,19 +513,119 @@ function library.new(library_title, cfg_location)
                     end
 
                     if type == "Toggle" then
+                        Border.Size = Border.Size + UDim2.new(0, 0, 0, 22)
+                        value = {Toggle = default and default or false}
+
+                        local ToggleFrame = library:create("Frame", {
+                            Name = "ToggleFrame",
+                            BackgroundTransparency = 1,
+                            Size = UDim2.new(1, 0, 0, 22),
+                        }, Container)
+
+                        local ToggleButton = library:create("TextButton", {
+                            Name = "ToggleButton",
+                            BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+                            BorderColor3 = Color3.fromRGB(0, 0, 0),
+                            Position = UDim2.new(0, 10, 0, 3),
+                            Size = UDim2.new(0, 14, 0, 14),
+                            Text = "",
+                            AutoButtonColor = false,
+                        })
+                        ToggleButton.Parent = ToggleFrame
+
+                        local ToggleText = library:create("TextLabel", {
+                            Name = "ToggleText",
+                            BackgroundTransparency = 1,
+                            Position = UDim2.new(0, 34, 0, 0),
+                            Size = UDim2.new(0, 200, 1, 0),
+                            Font = Enum.Font.Ubuntu,
+                            Text = text,
+                            TextColor3 = Color3.fromRGB(150, 150, 150),
+                            TextSize = 14,
+                            TextXAlignment = Enum.TextXAlignment.Left,
+                        }, ToggleFrame)
+
+                        function element:set_value(new_val, cb)
+                            value.Toggle = new_val.Toggle
+                            menu.values[tab.tab_num][section_name][sector_name][flag] = value
+                            
+                            if value.Toggle then
+                                library:tween(ToggleButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(84, 101, 255)})
+                                library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)})
+                            else
+                                library:tween(ToggleButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(25, 25, 25)})
+                                library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
+                            end
+                            if cb == nil or not cb then do_callback() end
+                        end
+
+                        ToggleButton.MouseButton1Down:Connect(function()
+                            value.Toggle = not value.Toggle
+                            element:set_value(value)
+                        end)
+
+                        element:set_value(value, true)
                         
                     elseif type == "ColorPicker" then
-                        local color = {}
-                        local extra_value = {Color = default and default.Color or Color3.fromRGB(255,255,255), Transparency = default and default.Transparency or 0}
-                        local extra_flag = flag .. " ColorPicker"
-                        
+                        Border.Size = Border.Size + UDim2.new(0, 0, 0, 22)
+                        value = {Color = default and default.Color or Color3.fromRGB(255, 255, 255), Transparency = default and default.Transparency or 0}
+
+                        local CPFrame = library:create("Frame", {
+                            Name = "ColorPickerFrame",
+                            BackgroundTransparency = 1,
+                            Size = UDim2.new(1, 0, 0, 22),
+                        }, Container)
+
+                        local CPText = library:create("TextLabel", {
+                            Name = "ColorPickerText",
+                            BackgroundTransparency = 1,
+                            Position = UDim2.new(0, 10, 0, 0),
+                            Size = UDim2.new(0, 200, 1, 0),
+                            Font = Enum.Font.Ubuntu,
+                            Text = text,
+                            TextColor3 = Color3.fromRGB(150, 150, 150),
+                            TextSize = 14,
+                            TextXAlignment = Enum.TextXAlignment.Left,
+                        }, CPFrame)
+
+                        local CPButton = library:create("TextButton", {
+                            Name = "ColorPickerButton",
+                            BackgroundColor3 = value.Color,
+                            BorderColor3 = Color3.fromRGB(0, 0, 0),
+                            Position = UDim2.new(0, 240, 0, 3),
+                            Size = UDim2.new(0, 25, 0, 14),
+                            Text = "",
+                        }, CPFrame)
+
+                        local PickerFrame = library:create("Frame", {
+                            Name = "PickerWindow",
+                            BackgroundColor3 = Color3.fromRGB(20, 20, 20),
+                            BorderColor3 = Color3.fromRGB(0, 0, 0),
+                            Position = UDim2.new(0, 20, 0, 25),
+                            Size = UDim2.new(0, 160, 0, 160),
+                            Visible = false,
+                            ZIndex = 5,
+                        }, CPButton)
+
+                        local Palette = library:create("ImageButton", {
+                            Name = "Palette",
+                            Position = UDim2.new(0, 10, 0, 10),
+                            Size = UDim2.new(0, 140, 0, 140),
+                            Image = "rbxassetid://415583266",
+                            ZIndex = 6,
+                        }, PickerFrame)
+
                         local function connect_picker(button, update_func)
                             if uis.TouchEnabled then
                                 button.InputBegan:Connect(function(input)
                                     if input.UserInputType ~= Enum.UserInputType.Touch then return end
                                     update_func(input.Position.X, input.Position.Y)
-                                    input.Changed:Connect(function()
-                                        if input.UserInputState == Enum.UserInputState.End then return end
+                                    local conn
+                                    conn = input.Changed:Connect(function()
+                                        if input.UserInputState == Enum.UserInputState.End then
+                                            conn:Disconnect()
+                                            return
+                                        end
                                         update_func(input.Position.X, input.Position.Y)
                                     end)
                                 end)
@@ -545,6 +645,26 @@ function library.new(library_title, cfg_location)
                                     end)
                                 end)
                             end
+                        end
+
+                        local function update_color(x, y)
+                            local x_percent = math.clamp((x - Palette.AbsolutePosition.X) / Palette.AbsoluteSize.X, 0, 1)
+                            local y_percent = math.clamp((y - Palette.AbsolutePosition.Y) / Palette.AbsoluteSize.Y, 0, 1)
+                            value.Color = Color3.fromHSV(x_percent, 1 - y_percent, 1)
+                            CPButton.BackgroundColor3 = value.Color
+                            do_callback()
+                        end
+
+                        connect_picker(Palette, update_color)
+
+                        CPButton.MouseButton1Down:Connect(function()
+                            PickerFrame.Visible = not PickerFrame.Visible
+                        end)
+
+                        function element:set_value(new_val, cb)
+                            value.Color = new_val.Color
+                            CPButton.BackgroundColor3 = value.Color
+                            if cb == nil or not cb then do_callback() end
                         end
 
                     elseif type == "Dropdown" then
