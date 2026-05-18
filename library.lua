@@ -33,16 +33,22 @@ local mouse = local_player:GetMouse()
 local http = game:GetService("HttpService")
 local rs = game:GetService("RunService")
 
-function library:set_draggable(gui)
+-- set_draggable: move `gui` ao arrastar. Se `handle` for fornecido,
+-- o arrasto só é iniciado quando o input começa dentro do handle
+-- (útil para restringir o drag ao topo do hub).
+function library:set_draggable(gui, handle)
     local UserInputService = game:GetService("UserInputService")
     local dragging, dragInput, dragStart, startPos
+
+    -- O elemento que escuta InputBegan é o handle (se fornecido) ou o próprio gui
+    local trigger = handle or gui
 
     local function update(input)
         local delta = input.Position - dragStart
         gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 
-    gui.InputBegan:Connect(function(input)
+    trigger.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
@@ -55,7 +61,7 @@ function library:set_draggable(gui)
         end
     end)
 
-    gui.InputChanged:Connect(function(input)
+    trigger.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
@@ -201,10 +207,10 @@ function library.new(library_title, cfg_location)
 
     local ImageLabel = library:create("ImageButton", {
         Name = "Main",
-        AnchorPoint = Vector2.new(0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = Color3.fromRGB(15, 15, 15),
         BorderColor3 = Color3.fromRGB(78, 93, 234),
-        Position = UDim2.new(0.5, 0, 0, 10),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(0, 700, 0, 450),
         Image = "http://www.roblox.com/asset/?id=7300333488",
         AutoButtonColor = false,
@@ -220,7 +226,18 @@ function library.new(library_title, cfg_location)
         return ImageLabel.Position
     end
 
-    library:set_draggable(ImageLabel)
+    -- TopBar: faixa invisível no topo do hub usada exclusivamente para arrastar.
+    -- ZIndex alto garante que fica na frente dos demais elementos da area do titulo.
+    local TopBar = library:create("Frame", {
+        Name = "TopBar",
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(1, 0, 0, 35),
+        ZIndex = 10,
+    }, ImageLabel)
+
+    -- Passa o TopBar como handle: o hub so e arrastado a partir do topo.
+    library:set_draggable(ImageLabel, TopBar)
 
     local Title = library:create("TextLabel", {
         Name = "Title",
@@ -1088,43 +1105,41 @@ function library.new(library_title, cfg_location)
                             TextXAlignment = Enum.TextXAlignment.Left,
                         }, Dropdown)
 
-                        local drop_scroll_size_y = (#data.options >= 4) and 80 or (20 * #data.options)
-                        local drop_canvas_y = #data.options * 20
-
                         local DropdownScroll = library:create("ScrollingFrame", {
                             Name = "DropdownScroll",
                             Active = true,
                             BackgroundColor3 = Color3.fromRGB(25, 25, 25),
                             BorderColor3 = Color3.fromRGB(0, 0, 0),
-                            Position = UDim2.new(0, 0, 0, 0),
-                            Size = UDim2.new(0, 260, 0, drop_scroll_size_y),
-                            CanvasSize = UDim2.new(0, 0, 0, drop_canvas_y),
+                            Position = UDim2.new(0, 9, 0, 41),
+                            Size = UDim2.new(0, 260, 0, 20),
+                            CanvasSize = UDim2.new(0, 0, 0, 0),
                             ScrollBarThickness = 2,
-                            ScrollBarImageColor3 = Color3.fromRGB(84, 101, 255),
                             TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
                             BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
                             Visible = false,
-                            ZIndex = 100,
-                        }, ScreenGui)
+                            ZIndex = 2,
+                        }, Dropdown)
 
                         library:create("UIListLayout", {
                             HorizontalAlignment = Enum.HorizontalAlignment.Center,
                             SortOrder = Enum.SortOrder.LayoutOrder,
                         }, DropdownScroll)
 
-                        local in_drop, in_drop2, dropdown_open = false, false, false
-
-                        local function update_dropdown_position()
-                            local abs = DropdownButton.AbsolutePosition
-                            DropdownScroll.Position = UDim2.new(0, abs.X, 0, abs.Y + DropdownButton.AbsoluteSize.Y)
+                        local options_num = #data.options
+                        if options_num >= 4 then
+                            DropdownScroll.Size = UDim2.new(0, 260, 0, 80)
+                            for i = 1, options_num do
+                                DropdownScroll.CanvasSize = DropdownScroll.CanvasSize + UDim2.new(0, 0, 0, 20)
+                            end
+                        else
+                            DropdownScroll.Size = UDim2.new(0, 260, 0, 20 * options_num)
                         end
 
+                        local in_drop, in_drop2, dropdown_open = false, false, false
+
                         DropdownButton.MouseButton1Down:Connect(function()
-                            dropdown_open = not dropdown_open
-                            if dropdown_open then
-                                update_dropdown_position()
-                            end
-                            DropdownScroll.Visible = dropdown_open
+                            DropdownScroll.Visible = not DropdownScroll.Visible
+                            dropdown_open = DropdownScroll.Visible
                             local col = dropdown_open and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
                             library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
                             library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
@@ -1136,7 +1151,6 @@ function library.new(library_title, cfg_location)
                         uis.InputBegan:Connect(function(input)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
                                 if DropdownScroll.Visible and not in_drop and not in_drop2 then
-                                    dropdown_open = false
                                     DropdownScroll.Visible = false
                                     DropdownScroll.CanvasPosition = Vector2.new(0, 0)
                                     library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
@@ -1220,33 +1234,29 @@ function library.new(library_title, cfg_location)
                             Size=UDim2.new(0,200,0,9), Font=Enum.Font.Ubuntu, Text=text,
                             TextColor3=Color3.fromRGB(150,150,150), TextSize=14, TextXAlignment=Enum.TextXAlignment.Left,
                         }, Dropdown)
-                        local combo_scroll_size_y = (#data.options >= 4) and 80 or (20 * #data.options)
-                        local combo_canvas_y = #data.options * 20
-
                         local DropdownScroll = library:create("ScrollingFrame", {
                             Name="DropdownScroll", Active=true, BackgroundColor3=Color3.fromRGB(25,25,25),
-                            BorderColor3=Color3.fromRGB(0,0,0), Position=UDim2.new(0,0,0,0),
-                            Size=UDim2.new(0,260,0,combo_scroll_size_y),
-                            CanvasSize=UDim2.new(0,0,0,combo_canvas_y), ScrollBarThickness=2,
-                            ScrollBarImageColor3=Color3.fromRGB(84,101,255),
+                            BorderColor3=Color3.fromRGB(0,0,0), Position=UDim2.new(0,9,0,41), Size=UDim2.new(0,260,0,20),
+                            CanvasSize=UDim2.new(0,0,0,0), ScrollBarThickness=2,
                             TopImage="rbxasset://textures/ui/Scroll/scroll-middle.png",
                             BottomImage="rbxasset://textures/ui/Scroll/scroll-middle.png",
-                            Visible=false, ZIndex=100,
-                        }, ScreenGui)
+                            Visible=false, ZIndex=2,
+                        }, Dropdown)
                         library:create("UIListLayout", {HorizontalAlignment=Enum.HorizontalAlignment.Center, SortOrder=Enum.SortOrder.LayoutOrder}, DropdownScroll)
+
+                        local options_num = #data.options
+                        if options_num >= 4 then
+                            DropdownScroll.Size = UDim2.new(0, 260, 0, 80)
+                            for i = 1, options_num do DropdownScroll.CanvasSize = DropdownScroll.CanvasSize + UDim2.new(0,0,0,20) end
+                        else
+                            DropdownScroll.Size = UDim2.new(0, 260, 0, 20 * options_num)
+                        end
 
                         local in_drop, in_drop2 = false, false
 
-                        local function update_combo_position()
-                            local abs = DropdownButton.AbsolutePosition
-                            DropdownScroll.Position = UDim2.new(0, abs.X, 0, abs.Y + DropdownButton.AbsoluteSize.Y)
-                        end
-
                         DropdownButton.MouseButton1Down:Connect(function()
-                            local nowVisible = not DropdownScroll.Visible
-                            if nowVisible then update_combo_position() end
-                            DropdownScroll.Visible = nowVisible
-                            local col = nowVisible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
+                            DropdownScroll.Visible = not DropdownScroll.Visible
+                            local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
                             library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
                             library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
                         end)
