@@ -220,8 +220,6 @@ function library.new(library_title, cfg_location)
         return ImageLabel.Position
     end
 
-    -- draggable removido do hub principal
-
     local DragBar = library:create("Frame", {
         Name = "DragBar",
         BackgroundTransparency = 1,
@@ -521,7 +519,8 @@ function library.new(library_title, cfg_location)
                         return value
                     end
 
-                   if type == "Toggle" then
+                    -- ==================== TOGGLE ====================
+                    if type == "Toggle" then
                         Border.Size = Border.Size + UDim2.new(0, 0, 0, 18)
                         value = {Toggle = default and default.Toggle or false}
 
@@ -874,7 +873,6 @@ function library.new(library_title, cfg_location)
                                 end
                             end)
 
-                            -- Transparency picker (opcional)
                             local TransparencyColor
                             local TransparencyPicker
                             local TransparencyPick
@@ -912,14 +910,12 @@ function library.new(library_title, cfg_location)
                                 extra_value.Transparency = 0
                             end
 
-                            -- Inicializa HSV
                             color.h = 0
                             color.s = 1
                             color.v = 1
                             extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
                             menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
 
-                            -- Funções de update que aceitam x,y (funciona no mouse e no touch)
                             function color.update_color(x, y)
                                 local ColorX = math.clamp((x - ColorPicker.AbsolutePosition.X) / ColorPicker.AbsoluteSize.X, 0, 1)
                                 local ColorY = math.clamp((y - ColorPicker.AbsolutePosition.Y) / ColorPicker.AbsoluteSize.Y, 0, 1)
@@ -954,7 +950,6 @@ function library.new(library_title, cfg_location)
                                 menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
                             end
 
-                            -- Função genérica de drag (mobile e desktop)
                             local function connect_picker(button, update_func)
                                 if uis.TouchEnabled then
                                     button.InputBegan:Connect(function(input)
@@ -1097,12 +1092,15 @@ function library.new(library_title, cfg_location)
                             Position = UDim2.new(0, 9, 0, 41),
                             Size = UDim2.new(0, 260, 0, 20 * calc_size),
                             CanvasSize = UDim2.new(0, 0, 0, 20 * options_num),
-                            ScrollBarThickness = 5,
+                            ScrollBarThickness = 6,
                             TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
                             BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
+                            ScrollBarImageColor3 = Color3.fromRGB(84, 101, 255),
                             Visible = false,
                             ZIndex = 50,
                             ScrollingEnabled = true,
+                            ScrollingDirection = Enum.ScrollingDirection.Y,
+                            ElasticBehavior = Enum.ElasticBehavior.Always,
                             AutomaticCanvasSize = Enum.AutomaticSize.Y,
                         }, Dropdown)
 
@@ -1111,25 +1109,19 @@ function library.new(library_title, cfg_location)
                             SortOrder = Enum.SortOrder.LayoutOrder,
                         }, DropdownScroll)
 
-                        DropdownScroll.ScrollingDirection = Enum.ScrollingDirection.Y
-                        DropdownScroll.ElasticBehavior = Enum.ElasticBehavior.Always
-                        DropdownScroll.ScrollBarThickness = 6
-                        DropdownScroll.Active = true
-                        DropdownScroll.Selectable = true
+                        -- FIX: listeners fora do MouseButton1Down para não duplicar a cada clique
+                        local in_drop = false
+                        local in_drop2 = false
 
-
-                        local in_drop, in_drop2, dropdown_open = false, false, false
-
-                        DropdownButton.MouseButton1Down:Connect(function()
-                            DropdownScroll.Visible = not DropdownScroll.Visible
-                            DropdownScroll.CanvasPosition = Vector2.new(0,0)
-                            DropdownScroll.ScrollingEnabled = true
                         Dropdown.MouseEnter:Connect(function() in_drop = true end)
                         Dropdown.MouseLeave:Connect(function() in_drop = false end)
                         DropdownScroll.MouseEnter:Connect(function() in_drop2 = true end)
                         DropdownScroll.MouseLeave:Connect(function() in_drop2 = false end)
+
                         uis.InputBegan:Connect(function(input)
-                            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
+                            if input.UserInputType == Enum.UserInputType.MouseButton1
+                            or input.UserInputType == Enum.UserInputType.MouseButton2
+                            or input.UserInputType == Enum.UserInputType.Touch then
                                 if DropdownScroll.Visible and not in_drop and not in_drop2 then
                                     DropdownScroll.Visible = false
                                     DropdownScroll.CanvasPosition = Vector2.new(0, 0)
@@ -1139,28 +1131,64 @@ function library.new(library_title, cfg_location)
                             end
                         end)
 
+                        DropdownButton.MouseButton1Down:Connect(function()
+                            DropdownScroll.Visible = not DropdownScroll.Visible
+                            DropdownScroll.CanvasPosition = Vector2.new(0, 0)
+                            local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
+                            library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
+                            library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
+                        end)
+
+                        -- Touch: abrir/fechar pelo botão no mobile
+                        if uis.TouchEnabled then
+                            DropdownButton.InputBegan:Connect(function(input)
+                                if input.UserInputType ~= Enum.UserInputType.Touch then return end
+                                DropdownScroll.Visible = not DropdownScroll.Visible
+                                DropdownScroll.CanvasPosition = Vector2.new(0, 0)
+                                local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
+                                library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
+                                library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
+                            end)
+                        end
+
                         function element:set_value(new_value, cb)
                             value = new_value and new_value or value
                             menu.values[tab.tab_num][section_name][sector_name][flag] = value
-                            DropdownButtonText.Text = new_value.Dropdown
+                            DropdownButtonText.Text = value.Dropdown
                             if cb == nil or not cb then do_callback() end
                         end
 
                         for _,v in next, data.options do
                             local Button = library:create("TextButton", {
-                                Name = v, BackgroundColor3 = Color3.fromRGB(25,25,25), BorderSizePixel = 0,
-                                Size = UDim2.new(1,0,0,20), AutoButtonColor = false, Text = "", ZIndex = 5,
+                                Name = v,
+                                BackgroundColor3 = Color3.fromRGB(25,25,25),
+                                BorderSizePixel = 0,
+                                Size = UDim2.new(1,0,0,20),
+                                AutoButtonColor = false,
+                                Text = "",
+                                ZIndex = 5,
                             }, DropdownScroll)
                             local ButtonText = library:create("TextLabel", {
-                                Name = "ButtonText", BackgroundTransparency = 1,
-                                Position = UDim2.new(0,8,0,0), Size = UDim2.new(0,245,1,0),
-                                Font = Enum.Font.Ubuntu, Text = v, TextColor3 = Color3.fromRGB(150,150,150),
-                                TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 60,
+                                Name = "ButtonText",
+                                BackgroundTransparency = 1,
+                                Position = UDim2.new(0,8,0,0),
+                                Size = UDim2.new(0,245,1,0),
+                                Font = Enum.Font.Ubuntu,
+                                Text = v,
+                                TextColor3 = Color3.fromRGB(150,150,150),
+                                TextSize = 14,
+                                TextXAlignment = Enum.TextXAlignment.Left,
+                                ZIndex = 60,
                             }, Button)
                             local Decoration = library:create("Frame", {
-                                Name = "Decoration", BackgroundColor3 = Color3.fromRGB(84,101,255),
-                                BorderSizePixel = 0, Size = UDim2.new(0,1,1,0), Visible = false, ZIndex = 5,
+                                Name = "Decoration",
+                                BackgroundColor3 = Color3.fromRGB(84,101,255),
+                                BorderSizePixel = 0,
+                                Size = UDim2.new(0,1,1,0),
+                                Visible = false,
+                                ZIndex = 5,
                             }, Button)
+
                             Button.MouseEnter:Connect(function()
                                 library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)})
                                 Decoration.Visible = true
@@ -1169,14 +1197,25 @@ function library.new(library_title, cfg_location)
                                 library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
                                 Decoration.Visible = false
                             end)
-                            Button.MouseButton1Down:Connect(function()
+
+                            local function select_option()
                                 DropdownScroll.Visible = false
                                 DropdownButtonText.Text = v
                                 value.Dropdown = v
                                 library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
                                 library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
                                 do_callback()
-                            end)
+                            end
+
+                            Button.MouseButton1Down:Connect(select_option)
+
+                            -- Touch support para cada opção
+                            if uis.TouchEnabled then
+                                Button.InputBegan:Connect(function(input)
+                                    if input.UserInputType ~= Enum.UserInputType.Touch then return end
+                                    select_option()
+                                end)
+                            end
                         end
                         element:set_value(value, true)
 
@@ -1221,28 +1260,32 @@ function library.new(library_title, cfg_location)
 
                         local DropdownScroll = library:create("ScrollingFrame", {
                             Name="DropdownScroll", Active=true, BackgroundColor3=Color3.fromRGB(25,25,25),
-                            BorderColor3=Color3.fromRGB(0,0,0), Position=UDim2.new(0,9,0,41), Size=UDim2.new(0,260,0,20 * calc_size),
-                            CanvasSize=UDim2.new(0,0,0,20 * options_num), ScrollBarThickness=5,
+                            BorderColor3=Color3.fromRGB(0,0,0), Position=UDim2.new(0,9,0,41),
+                            Size=UDim2.new(0,260,0,20 * calc_size),
+                            CanvasSize=UDim2.new(0,0,0,20 * options_num),
+                            ScrollBarThickness=6,
+                            ScrollBarImageColor3=Color3.fromRGB(84,101,255),
                             TopImage="rbxasset://textures/ui/Scroll/scroll-middle.png",
                             BottomImage="rbxasset://textures/ui/Scroll/scroll-middle.png",
                             Visible=false, ZIndex=5,
+                            ScrollingDirection=Enum.ScrollingDirection.Y,
+                            ElasticBehavior=Enum.ElasticBehavior.Always,
                         }, Dropdown)
                         library:create("UIListLayout", {HorizontalAlignment=Enum.HorizontalAlignment.Center, SortOrder=Enum.SortOrder.LayoutOrder}, DropdownScroll)
 
-                        local in_drop, in_drop2 = false, false
+                        -- FIX: listeners fora do click handler
+                        local in_drop = false
+                        local in_drop2 = false
 
-                        DropdownButton.MouseButton1Down:Connect(function()
-                            DropdownScroll.Visible = not DropdownScroll.Visible
-                            local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
-                            library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                            library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                        end)
                         Dropdown.MouseEnter:Connect(function() in_drop = true end)
                         Dropdown.MouseLeave:Connect(function() in_drop = false end)
                         DropdownScroll.MouseEnter:Connect(function() in_drop2 = true end)
                         DropdownScroll.MouseLeave:Connect(function() in_drop2 = false end)
+
                         uis.InputBegan:Connect(function(input)
-                            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
+                            if input.UserInputType == Enum.UserInputType.MouseButton1
+                            or input.UserInputType == Enum.UserInputType.MouseButton2
+                            or input.UserInputType == Enum.UserInputType.Touch then
                                 if DropdownScroll.Visible and not in_drop and not in_drop2 then
                                     DropdownScroll.Visible = false
                                     DropdownScroll.CanvasPosition = Vector2.new(0,0)
@@ -1251,6 +1294,23 @@ function library.new(library_title, cfg_location)
                                 end
                             end
                         end)
+
+                        DropdownButton.MouseButton1Down:Connect(function()
+                            DropdownScroll.Visible = not DropdownScroll.Visible
+                            local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
+                            library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
+                            library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
+                        end)
+
+                        if uis.TouchEnabled then
+                            DropdownButton.InputBegan:Connect(function(input)
+                                if input.UserInputType ~= Enum.UserInputType.Touch then return end
+                                DropdownScroll.Visible = not DropdownScroll.Visible
+                                local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
+                                library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
+                                library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
+                            end)
+                        end
 
                         function element.update_text()
                             local options = {}
@@ -1301,6 +1361,7 @@ function library.new(library_title, cfg_location)
                                 Name="Decoration", BackgroundColor3=Color3.fromRGB(84,101,255),
                                 BorderSizePixel=0, Size=UDim2.new(0,1,1,0), Visible=false, ZIndex=5,
                             }, Button)
+
                             Button.MouseEnter:Connect(function()
                                 if not table.find(value.Combo, v) then
                                     library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(200,200,200)})
@@ -1311,7 +1372,8 @@ function library.new(library_title, cfg_location)
                                     library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
                                 end
                             end)
-                            Button.MouseButton1Down:Connect(function()
+
+                            local function toggle_combo_option()
                                 if table.find(value.Combo, v) then
                                     table.remove(value.Combo, table.find(value.Combo, v))
                                     Decoration.Visible = false
@@ -1323,7 +1385,16 @@ function library.new(library_title, cfg_location)
                                 end
                                 element.update_text()
                                 do_callback()
-                            end)
+                            end
+
+                            Button.MouseButton1Down:Connect(toggle_combo_option)
+
+                            if uis.TouchEnabled then
+                                Button.InputBegan:Connect(function(input)
+                                    if input.UserInputType ~= Enum.UserInputType.Touch then return end
+                                    toggle_combo_option()
+                                end)
+                            end
                         end
                         element:set_value(value, true)
 
@@ -1353,6 +1424,14 @@ function library.new(library_title, cfg_location)
                             library:tween(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BorderColor3 = Color3.fromRGB(0,0,0)})
                             do_callback()
                         end)
+                        if uis.TouchEnabled then
+                            Button.InputBegan:Connect(function(input)
+                                if input.UserInputType ~= Enum.UserInputType.Touch then return end
+                                Button.BorderColor3 = Color3.fromRGB(84, 101, 255)
+                                library:tween(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BorderColor3 = Color3.fromRGB(0,0,0)})
+                                do_callback()
+                            end)
+                        end
 
                     -- ==================== TEXTBOX ====================
                     elseif type == "TextBox" then
@@ -1480,7 +1559,8 @@ function library.new(library_title, cfg_location)
                                     library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
                                 end
                             end)
-                            Button.MouseButton1Down:Connect(function()
+
+                            local function select_scroll()
                                 for _,B2 in next, ScrollFrame:GetChildren() do
                                     if not B2:IsA("TextButton") then continue end
                                     B2.Decoration.Visible = false
@@ -1491,7 +1571,15 @@ function library.new(library_title, cfg_location)
                                 library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)})
                                 value.Scroll = v
                                 do_callback()
-                            end)
+                            end
+
+                            Button.MouseButton1Down:Connect(select_scroll)
+                            if uis.TouchEnabled then
+                                Button.InputBegan:Connect(function(input)
+                                    if input.UserInputType ~= Enum.UserInputType.Touch then return end
+                                    select_scroll()
+                                end)
+                            end
                         end
 
                         local scroll_is_first = true
@@ -1513,8 +1601,10 @@ function library.new(library_title, cfg_location)
                                 B2.Decoration.Visible = false
                                 library:tween(B2.ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
                             end
-                            ScrollFrame[value.Scroll].Decoration.Visible = true
-                            library:tween(ScrollFrame[value.Scroll].ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)})
+                            if ScrollFrame:FindFirstChild(value.Scroll) then
+                                ScrollFrame[value.Scroll].Decoration.Visible = true
+                                library:tween(ScrollFrame[value.Scroll].ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)})
+                            end
                             if cb == nil or not cb then do_callback() end
                         end
                         element:set_value(value, true)
