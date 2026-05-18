@@ -210,7 +210,7 @@ function library.new(library_title, cfg_location)
 
     local UIConstraint = library:create("UIScale", {Name = "MenuScale"}, ImageLabel)
     if uis.TouchEnabled then
-        UIConstraint.Scale = 0.65
+        UIConstraint.Scale = 0.85
     end
 
     function menu.GetPosition()
