@@ -1038,20 +1038,7 @@ end
                                     color_callback(extra_value)
                                     menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
                                 end
-                                TransparencyPicker.MouseButton1Down:Connect(function()
-                                    color.update_transp()
-                                    local moveconnection = mouse.Move:Connect(function()
-                                        color.update_transp()
-                                    end)
-                                    releaseconnection = uis.InputEnded:Connect(function(Mouse)
-                                        if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
-                                            color.update_transp()
-                                            moveconnection:Disconnect()
-                                            releaseconnection:Disconnect()
-                                        end
-                                    end)
-                                end)
-                            end
+                                
 
                             color.h = (math.clamp(HuePick.AbsolutePosition.Y-HuePicker.AbsolutePosition.Y, 0, HuePicker.AbsoluteSize.Y)/HuePicker.AbsoluteSize.Y)
                             color.s = 1-(math.clamp(ColorPick.AbsolutePosition.X-ColorPick.AbsolutePosition.X, 0, ColorPick.AbsoluteSize.X)/ColorPick.AbsoluteSize.X)
@@ -1073,19 +1060,7 @@ end
                                 color_callback(extra_value)
                                 menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
                             end
-                            ColorPicker.MouseButton1Down:Connect(function()
-                                color.update_color()
-                                local moveconnection = mouse.Move:Connect(function()
-                                    color.update_color()
-                                end)
-                                releaseconnection = uis.InputEnded:Connect(function(Mouse)
-                                    if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
-                                        color.update_color()
-                                        moveconnection:Disconnect()
-                                        releaseconnection:Disconnect()
-                                    end
-                                end)
-                            end)
+                            
 
                             function color.update_hue()
                                 local y = math.clamp(mouse.Y - HuePicker.AbsolutePosition.Y, 0, 148)
@@ -1101,19 +1076,86 @@ end
                                 color_callback(extra_value)
                                 menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
                             end
-                            HuePicker.MouseButton1Down:Connect(function()
-                                color.update_hue()
-                                local moveconnection = mouse.Move:Connect(function()
-                                    color.update_hue()
-                                end)
-                                releaseconnection = uis.InputEnded:Connect(function(Mouse)
-                                    if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
-                                        color.update_hue()
-                                        moveconnection:Disconnect()
-                                        releaseconnection:Disconnect()
-                                    end
-                                end)
-                            end)
+                            
+                            -- ✅ CORREÇÃO: função genérica para conectar drag em qualquer picker
+local function connect_picker(button, update_func)
+    if uis.TouchEnabled then
+        button.InputBegan:Connect(function(input)
+            if input.UserInputType ~= Enum.UserInputType.Touch then return end
+
+            update_func(input.Position.X, input.Position.Y)
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    return -- dedo saiu, para automaticamente
+                end
+                update_func(input.Position.X, input.Position.Y)
+            end)
+        end)
+    else
+        button.MouseButton1Down:Connect(function()
+            update_func(mouse.X, mouse.Y)
+
+            local moveconn = mouse.Move:Connect(function()
+                update_func(mouse.X, mouse.Y)
+            end)
+            local releaseconn
+            releaseconn = uis.InputEnded:Connect(function(Mouse)
+                if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
+                    update_func(mouse.X, mouse.Y)
+                    moveconn:Disconnect()
+                    releaseconn:Disconnect()
+                end
+            end)
+        end)
+    end
+end
+
+-- Agora substitua as funções de update para aceitar x, y como parâmetro
+function color.update_color(x, y)
+    local ColorX = (math.clamp(x - ColorPicker.AbsolutePosition.X, 0, ColorPicker.AbsoluteSize.X) / ColorPicker.AbsoluteSize.X)
+    local ColorY = (math.clamp(y - ColorPicker.AbsolutePosition.Y, 0, ColorPicker.AbsoluteSize.Y) / ColorPicker.AbsoluteSize.Y)
+    ColorPick.Position = UDim2.new(ColorX, 0, ColorY, 0)
+
+    color.s = 1 - ColorX
+    color.v = 1 - ColorY
+
+    ColorButton.BackgroundColor3 = Color3.fromHSV(color.h, color.s, color.v)
+    extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
+    color_callback(extra_value)
+    menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
+end
+
+function color.update_hue(x, y)
+    local yPos = math.clamp(y - HuePicker.AbsolutePosition.Y, 0, 148)
+    HuePick.Position = UDim2.new(0, 0, 0, yPos)
+    local hue = yPos / 148
+    color.h = 1 - hue
+    ColorPicker.ImageColor3 = Color3.fromHSV(color.h, 1, 1)
+    ColorButton.BackgroundColor3 = Color3.fromHSV(color.h, color.s, color.v)
+    if TransparencyColor then
+        TransparencyColor.ImageColor3 = Color3.fromHSV(color.h, 1, 1)
+    end
+    extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
+    color_callback(extra_value)
+    menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
+end
+
+function color.update_transp(x, y)
+    local xPos = math.clamp(x - TransparencyPicker.AbsolutePosition.X, 0, 180)
+    TransparencyPick.Position = UDim2.new(0, xPos, 0, 0)
+    extra_value.Transparency = xPos / 180
+    color_callback(extra_value)
+    menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
+end
+
+-- Conecta os pickers com a função genérica
+connect_picker(ColorPicker, color.update_color)
+connect_picker(HuePicker, color.update_hue)
+if has_transparency then
+    connect_picker(TransparencyPicker, color.update_transp)
+end
+                           
 
                             function color:set_value(new_value, cb)
                                 extra_value = new_value and new_value or extra_value
