@@ -197,15 +197,13 @@ end
             Name = "ToggleBtn",
             Parent = MobileToggleGui,
             Size = UDim2.new(0, 50, 0, 50),
-            Position = UDim2.new(0, 15, 1, -65), -- Posição: Lado inferior esquerdo
+            Position = UDim2.new(0, 15, 1, -65), 
             BackgroundColor3 = Color3.fromRGB(15, 15, 15),
-            -- Coloque o ID da sua imagem aqui abaixo:
-            Image = "rbxassetid://SEU_ID_DE_IMAGEM_AQUI", 
+            Image = "rbxassetid://", 
         })
-        
-        -- Adicionando Bordas Arredondadas
+       
         library:create("UICorner", {
-            CornerRadius = UDim.new(0.2, 0) -- Altere 0.2 para 1 se quiser um botão 100% redondo (círculo perfeito)
+            CornerRadius = UDim.new(0.2, 0) 
         }, ToggleBtn)
         
         -- Adicionando a Borda Azul (UIStroke é necessário quando se usa bordas arredondadas)
@@ -233,8 +231,6 @@ local ImageLabel = library:create("ImageButton", {
     BorderColor3 = Color3.fromRGB(78, 93, 234),
     Position = UDim2.new(0.5, 0, 0.5, 0),
     
-    -- Definimos um tamanho quadrado fixo (700x700) para o PC e Mobile
-    -- Isso garante que o formato interno de abas e textos nunca quebrem
     Size = UDim2.new(0, 700, 0, 450),
     Image = "http://www.roblox.com/asset/?id=7300333488",
     AutoButtonColor = false,
@@ -2037,51 +2033,64 @@ end
 
                             mouse_in = false
                         end)
-                        SliderButton.MouseButton1Down:Connect(function()
-                            SliderFrame.Size = UDim2.new(0, math.clamp(mouse.X - SliderFrame.AbsolutePosition.X, 0, 260), 1, 0)
+                        local function update_slider(input_x)
                         
-                            local val = math.floor((((max - min) / 260) * SliderFrame.AbsoluteSize.X) + min)
-                            if val ~= value.Slider then
-                                SliderValue.Text = val
-                                value.Slider = val
-                                do_callback()
-                            end
+    SliderFrame.Size = UDim2.new(0, math.clamp(input_x - SliderButton.AbsolutePosition.X, 0, 260), 1, 0)
 
-                            is_sliding = true
+    local val = math.floor((((max - min) / 260) * SliderFrame.AbsoluteSize.X) + min)
+    if val ~= value.Slider then
+        SliderValue.Text = val
+        value.Slider = val
+        do_callback()
+    end
+end
 
-                            move_connection = mouse.Move:Connect(function()
-                                SliderFrame.Size = UDim2.new(0, math.clamp(mouse.X - SliderFrame.AbsolutePosition.X, 0, 260), 1, 0)
-                        
-                                local val = math.floor((((max - min) / 260) * SliderFrame.AbsoluteSize.X) + min)
-                                if val ~= value.Slider then
-                                    SliderValue.Text = val
-                                    value.Slider = val
-                                    do_callback()
-                                end
-                            end)
-                            release_connection = uis.InputEnded:Connect(function(Mouse)
-                                if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
-                                    SliderFrame.Size = UDim2.new(0, math.clamp(mouse.X - SliderFrame.AbsolutePosition.X, 0, 260), 1, 0)
-                        
-                                    local val = math.floor((((max - min) / 260) * SliderFrame.AbsoluteSize.X) + min)
-                                    if val ~= value.Slider then
-                                        SliderValue.Text = val
-                                        value.Slider = val
-                                        do_callback()
-                                    end
+local function stop_sliding()
+    is_sliding = false
 
-                                    is_sliding = false
+    if not mouse_in then
+        library:tween(SliderText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
+        library:tween(SliderValue, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
+    end
 
-                                    if not mouse_in then
-                                        library:tween(SliderText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
-                                        library:tween(SliderValue, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
-                                    end
+    if move_connection then move_connection:Disconnect() end
+    if release_connection then release_connection:Disconnect() end
+end
 
-                                    move_connection:Disconnect()
-                                    release_connection:Disconnect()
-                                end
-                            end)
-                        end)
+if uis.TouchEnabled then
+    SliderButton.InputBegan:Connect(function(input)
+        if input.UserInputType ~= Enum.UserInputType.Touch then return end
+
+        is_sliding = true
+        update_slider(input.Position.X)
+
+        move_connection = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                stop_sliding()
+                return
+            end
+            if is_sliding then
+                update_slider(input.Position.X)
+            end
+        end)
+    end)
+else
+    SliderButton.MouseButton1Down:Connect(function()
+        update_slider(mouse.X)
+        is_sliding = true
+
+        move_connection = mouse.Move:Connect(function()
+            update_slider(mouse.X)
+        end)
+
+        release_connection = uis.InputEnded:Connect(function(Mouse)
+            if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
+                update_slider(mouse.X)
+                stop_sliding()
+            end
+        end)
+    end)
+end
 
                         function element:set_value(new_value, cb)
                             value = new_value and new_value or value
