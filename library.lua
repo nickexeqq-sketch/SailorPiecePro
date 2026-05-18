@@ -33,37 +33,71 @@ local mouse = local_player:GetMouse()
 local http = game:GetService("HttpService")
 local rs = game:GetService("RunService")
 
+-- set_draggable: arrasta o PAI do gui (o hub), não o próprio gui
+-- Só ativa o drag se o dedo/mouse mover mais de DRAG_THRESHOLD pixels
 function library:set_draggable(gui)
     local UserInputService = game:GetService("UserInputService")
-    local dragging, dragInput, dragStart, startPos
+    local DRAG_THRESHOLD = 6  -- pixels mínimos para considerar drag (evita cancelar clicks)
 
-    local function update(input)
-        local delta = input.Position - dragStart
-        gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    local target      -- quem realmente vai ser movido (pai do DragBar = o hub)
+    local dragging    = false
+    local dragMoved   = false
+    local dragInput
+    local dragStart
+    local startPos
+
+    -- O alvo é o pai do gui (DragBar -> ImageLabel/hub)
+    -- Se o gui já for o hub (ToggleBtn mobile), move ele mesmo
+    local function get_target()
+        if gui.Parent and gui.Parent:IsA("GuiObject") then
+            return gui.Parent
+        end
+        return gui
+    end
+
+    local function update(inputPos)
+        local t = get_target()
+        local delta = inputPos - dragStart
+        -- só começa a mover após threshold
+        if not dragMoved then
+            if math.abs(delta.X) > DRAG_THRESHOLD or math.abs(delta.Y) > DRAG_THRESHOLD then
+                dragMoved = true
+            else
+                return
+            end
+        end
+        t.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
     end
 
     gui.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging  = true
+            dragMoved = false
             dragStart = input.Position
-            startPos = gui.Position
+            startPos  = get_target().Position
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
+                    dragging  = false
+                    dragMoved = false
                 end
             end)
         end
     end)
 
     gui.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
 
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
-            update(input)
+            update(input.Position)
         end
     end)
 end
@@ -589,7 +623,7 @@ function library.new(library_title, cfg_location)
                             if value.Toggle then return end
                             library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
                         end)
-                        ToggleButton.MouseButton1Down:Connect(function()
+                        ToggleButton.MouseButton1Click:Connect(function()
                             element:set_value({Toggle = not value.Toggle})
                         end)
                         element:set_value(value, true)
@@ -1131,25 +1165,13 @@ function library.new(library_title, cfg_location)
                             end
                         end)
 
-                        DropdownButton.MouseButton1Down:Connect(function()
+                        DropdownButton.MouseButton1Click:Connect(function()
                             DropdownScroll.Visible = not DropdownScroll.Visible
                             DropdownScroll.CanvasPosition = Vector2.new(0, 0)
                             local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
                             library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
                             library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
                         end)
-
-                        -- Touch: abrir/fechar pelo botão no mobile
-                        if uis.TouchEnabled then
-                            DropdownButton.InputBegan:Connect(function(input)
-                                if input.UserInputType ~= Enum.UserInputType.Touch then return end
-                                DropdownScroll.Visible = not DropdownScroll.Visible
-                                DropdownScroll.CanvasPosition = Vector2.new(0, 0)
-                                local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
-                                library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                                library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                            end)
-                        end
 
                         function element:set_value(new_value, cb)
                             value = new_value and new_value or value
@@ -1207,15 +1229,7 @@ function library.new(library_title, cfg_location)
                                 do_callback()
                             end
 
-                            Button.MouseButton1Down:Connect(select_option)
-
-                            -- Touch support para cada opção
-                            if uis.TouchEnabled then
-                                Button.InputBegan:Connect(function(input)
-                                    if input.UserInputType ~= Enum.UserInputType.Touch then return end
-                                    select_option()
-                                end)
-                            end
+                            Button.MouseButton1Click:Connect(select_option)
                         end
                         element:set_value(value, true)
 
@@ -1295,22 +1309,12 @@ function library.new(library_title, cfg_location)
                             end
                         end)
 
-                        DropdownButton.MouseButton1Down:Connect(function()
+                        DropdownButton.MouseButton1Click:Connect(function()
                             DropdownScroll.Visible = not DropdownScroll.Visible
                             local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
                             library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
                             library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
                         end)
-
-                        if uis.TouchEnabled then
-                            DropdownButton.InputBegan:Connect(function(input)
-                                if input.UserInputType ~= Enum.UserInputType.Touch then return end
-                                DropdownScroll.Visible = not DropdownScroll.Visible
-                                local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
-                                library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                                library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                            end)
-                        end
 
                         function element.update_text()
                             local options = {}
@@ -1387,14 +1391,7 @@ function library.new(library_title, cfg_location)
                                 do_callback()
                             end
 
-                            Button.MouseButton1Down:Connect(toggle_combo_option)
-
-                            if uis.TouchEnabled then
-                                Button.InputBegan:Connect(function(input)
-                                    if input.UserInputType ~= Enum.UserInputType.Touch then return end
-                                    toggle_combo_option()
-                                end)
-                            end
+                            Button.MouseButton1Click:Connect(toggle_combo_option)
                         end
                         element:set_value(value, true)
 
@@ -1419,19 +1416,11 @@ function library.new(library_title, cfg_location)
                         Button.MouseLeave:Connect(function()
                             library:tween(Button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
                         end)
-                        Button.MouseButton1Down:Connect(function()
+                        Button.MouseButton1Click:Connect(function()
                             Button.BorderColor3 = Color3.fromRGB(84, 101, 255)
                             library:tween(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BorderColor3 = Color3.fromRGB(0,0,0)})
                             do_callback()
                         end)
-                        if uis.TouchEnabled then
-                            Button.InputBegan:Connect(function(input)
-                                if input.UserInputType ~= Enum.UserInputType.Touch then return end
-                                Button.BorderColor3 = Color3.fromRGB(84, 101, 255)
-                                library:tween(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BorderColor3 = Color3.fromRGB(0,0,0)})
-                                do_callback()
-                            end)
-                        end
 
                     -- ==================== TEXTBOX ====================
                     elseif type == "TextBox" then
@@ -1573,13 +1562,7 @@ function library.new(library_title, cfg_location)
                                 do_callback()
                             end
 
-                            Button.MouseButton1Down:Connect(select_scroll)
-                            if uis.TouchEnabled then
-                                Button.InputBegan:Connect(function(input)
-                                    if input.UserInputType ~= Enum.UserInputType.Touch then return end
-                                    select_scroll()
-                                end)
-                            end
+                            Button.MouseButton1Click:Connect(select_scroll)
                         end
 
                         local scroll_is_first = true
