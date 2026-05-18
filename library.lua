@@ -144,6 +144,8 @@ function library.new(library_title, cfg_location)
 		syn.protect_gui(ScreenGui)
 	end
 
+   
+if not uis.TouchEnabled then
     local Cursor = library:create("ImageLabel", {
         Name = "Cursor",
         BackgroundTransparency = 1,
@@ -155,6 +157,8 @@ function library.new(library_title, cfg_location)
     rs.RenderStepped:Connect(function()
         Cursor.Position = UDim2.new(0, mouse.X, 0, mouse.Y + 36)
     end)
+end
+
 
 	ScreenGui.Parent = game:GetService("CoreGui")
 
@@ -176,18 +180,54 @@ function library.new(library_title, cfg_location)
             rs.RenderStepped:Wait()
         end
 	end)
+	
+	if uis.TouchEnabled then
+    -- Criamos uma ScreenGui separada para o botão não sumir quando escondermos o menu principal
+    local MobileToggleGui = library:create("ScreenGui", {
+        Name = "MobileToggleGui",
+        ResetOnSpawn = false,
+        ZIndexBehavior = Enum.ZIndexBehavior.Global,
+    })
+    MobileToggleGui.Parent = game:GetService("CoreGui")
 
-    local ImageLabel = library:create("ImageButton", {
-        Name = "Main",
-        AnchorPoint = Vector2.new(0.5, 0.5),
+    if syn then syn.protect_gui(MobileToggleGui) end
+
+    local ToggleBtn = library:create("TextButton", {
+        Name = "ToggleBtn",
+        Parent = MobileToggleGui,
+        Size = UDim2.new(0, 45, 0, 45),
+        Position = UDim2.new(0.5, -22, 0, 15), -- Fica no topo da tela
         BackgroundColor3 = Color3.fromRGB(15, 15, 15),
         BorderColor3 = Color3.fromRGB(78, 93, 234),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(0, 700, 0, 500),
-        Image = "http://www.roblox.com/asset/?id=7300333488",
-        AutoButtonColor = false,
-        Modal = true,
-    }, ScreenGui)
+        Text = "MENU",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.Ubuntu,
+        TextSize = 12
+    })
+    
+    -- Deixa o botão de abrir/fechar arrastável para não atrapalhar o jogo
+    library:set_draggable(ToggleBtn)
+
+    ToggleBtn.MouseButton1Click:Connect(function()
+        ScreenGui.Enabled = not ScreenGui.Enabled
+        menu.open = ScreenGui.Enabled
+    end)
+end
+
+
+local ImageLabel = library:create("ImageButton", {
+    Name = "Main",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundColor3 = Color3.fromRGB(15, 15, 15),
+    BorderColor3 = Color3.fromRGB(78, 93, 234),
+    Position = UDim2.new(0.5, 0, 0.5, 0),
+    
+    Size = uis.TouchEnabled and UDim2.new(0.9, 0, 0.9, 0) or UDim2.new(0, 700, 0, 500),
+    Image = "http://www.roblox.com/asset/?id=7300333488",
+    AutoButtonColor = false,
+    Modal = true,
+}, ScreenGui)
+
 
     function menu.GetPosition()
         return ImageLabel.Position
