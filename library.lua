@@ -235,7 +235,7 @@ local ImageLabel = library:create("ImageButton", {
     
     -- Definimos um tamanho quadrado fixo (700x700) para o PC e Mobile
     -- Isso garante que o formato interno de abas e textos nunca quebrem
-    Size = UDim2.new(0, 700, 0, 500),
+    Size = UDim2.new(0, 700, 0, 450),
     Image = "http://www.roblox.com/asset/?id=7300333488",
     AutoButtonColor = false,
     Modal = true,
@@ -247,7 +247,7 @@ local UIConstraint = library:create("UIScale", {
 }, ImageLabel)
 
 if uis.TouchEnabled then
-    UIConstraint.Scale = 0.55
+    UIConstraint.Scale = 0.65
 end
 
 
