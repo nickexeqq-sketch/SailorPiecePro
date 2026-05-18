@@ -236,24 +236,16 @@ function library.new(library_title, cfg_location)
         RichText = true,
     }, ImageLabel)
 
+    local TabButtons = library:create("Frame", {
+        Name = "TabButtons",
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 12, 0, 41),
+        Size = UDim2.new(0, 76, 0, 447),
+    }, ImageLabel)
 
-local TabButtons = library:create("ScrollingFrame", {
-    Name = "TabButtons",
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0, 12, 0, 41),
-    Size = UDim2.new(0, 76, 0, 400),
-    CanvasSize = UDim2.new(0, 0, 0, 0),   
-    ScrollBarThickness = 0,                
-    ScrollingDirection = Enum.ScrollingDirection.Y,
-    ClipsDescendants = true,
-    BorderSizePixel = 0,
-}, ImageLabel)
-
-library:create("UIListLayout", {
-    HorizontalAlignment = Enum.HorizontalAlignment.Center,
-    SortOrder = Enum.SortOrder.LayoutOrder,
-    Padding = UDim.new(0, 4),
-}, TabButtons)
+    library:create("UIListLayout", {
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+    }, TabButtons)
 
     local Tabs = library:create("Frame", {
         Name = "Tabs",
@@ -287,18 +279,6 @@ library:create("UIListLayout", {
             Size = UDim2.new(0, 76, 0, 90),
             Text = "",
         }, TabButtons)
-        
-        
-        local TabButtonsLayout = library:create("UIListLayout", {
-                   HorizontalAlignment = Enum.HorizontalAlignment.Center,
-                   SortOrder = Enum.SortOrder.LayoutOrder,
-                   Padding = UDim.new(0, 4),
-          }, TabButtons)
-
-       
-       TabButtonsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                TabButtons.CanvasSize = UDim2.new(0, 0, 0, TabButtonsLayout.AbsoluteContentSize.Y)
-        end)
 
         local TabImage = library:create("ImageLabel", {
             AnchorPoint = Vector2.new(0.5, 0.5),
