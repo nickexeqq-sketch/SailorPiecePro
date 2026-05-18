@@ -1092,13 +1092,19 @@ function library.new(library_title, cfg_location)
                             TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
                             BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
                             Visible = false,
-                            ZIndex = 5,
+                            ZIndex = 50,
+                            ScrollingEnabled = true,
+                            AutomaticCanvasSize = Enum.AutomaticSize.Y,
                         }, Dropdown)
 
                         library:create("UIListLayout", {
                             HorizontalAlignment = Enum.HorizontalAlignment.Center,
                             SortOrder = Enum.SortOrder.LayoutOrder,
                         }, DropdownScroll)
+
+                        DropdownScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+                        DropdownScroll.ElasticBehavior = Enum.ElasticBehavior.Always
+
 
                         local in_drop, in_drop2, dropdown_open = false, false, false
 
@@ -1140,7 +1146,7 @@ function library.new(library_title, cfg_location)
                                 Name = "ButtonText", BackgroundTransparency = 1,
                                 Position = UDim2.new(0,8,0,0), Size = UDim2.new(0,245,1,0),
                                 Font = Enum.Font.Ubuntu, Text = v, TextColor3 = Color3.fromRGB(150,150,150),
-                                TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
+                                TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 60,
                             }, Button)
                             local Decoration = library:create("Frame", {
                                 Name = "Decoration", BackgroundColor3 = Color3.fromRGB(84,101,255),
@@ -1275,7 +1281,7 @@ function library.new(library_title, cfg_location)
                         for _,v in next, data.options do
                             local Button = library:create("TextButton", {
                                 Name=v, BackgroundColor3=Color3.fromRGB(25,25,25), BorderSizePixel=0,
-                                Size=UDim2.new(1,0,0,20), AutoButtonColor=false, Text="", ZIndex=5,
+                                Size=UDim2.new(1,0,0,20), AutoButtonColor=false, Text="", ZIndex=60,
                             }, DropdownScroll)
                             local ButtonText = library:create("TextLabel", {
                                 Name="ButtonText", BackgroundTransparency=1, Position=UDim2.new(0,8,0,0),
