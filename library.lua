@@ -1044,314 +1044,113 @@ library:create("UIListLayout", {
                         end
 
                     -- ==================== DROPDOWN ====================
-                    elseif type == "Dropdown" then
+                                        if type == "Dropdown" then
                         Border.Size = Border.Size + UDim2.new(0, 0, 0, 45)
                         value = {Dropdown = default and default.Dropdown or data.options[1]}
 
                         local Dropdown = library:create("TextLabel", {
-                            Name = "Dropdown",
-                            BackgroundTransparency = 1,
-                            Size = UDim2.new(1, 0, 0, 45),
-                            Text = "",
+                            Name = "Dropdown", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 45), Text = "",
                         }, Container)
 
-                        function element:set_visible(bool)
-                            if bool then
-                                if Dropdown.Visible then return end
-                                Border.Size = Border.Size + UDim2.new(0, 0, 0, 45)
-                                Dropdown.Visible = true
-                            else
-                                if not Dropdown.Visible then return end
-                                Border.Size = Border.Size + UDim2.new(0, 0, 0, -45)
-                                Dropdown.Visible = false
-                            end
-                        end
-
                         local DropdownButton = library:create("TextButton", {
-                            Name = "DropdownButton",
-                            BackgroundColor3 = Color3.fromRGB(25, 25, 25),
-                            BorderColor3 = Color3.fromRGB(0, 0, 0),
-                            Position = UDim2.new(0, 9, 0, 20),
-                            Size = UDim2.new(0, 260, 0, 20),
-                            AutoButtonColor = false,
-                            Text = "",
+                            Name = "DropdownButton", BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+                            BorderColor3 = Color3.fromRGB(0, 0, 0), Position = UDim2.new(0, 9, 0, 20),
+                            Size = UDim2.new(0, 260, 0, 20), AutoButtonColor = false, Text = "",
                         }, Dropdown)
 
                         local DropdownButtonText = library:create("TextLabel", {
-                            Name = "DropdownButtonText",
-                            BackgroundTransparency = 1,
-                            Position = UDim2.new(0, 6, 0, 0),
-                            Size = UDim2.new(0, 250, 1, 0),
-                            Font = Enum.Font.Ubuntu,
-                            Text = value.Dropdown,
-                            TextColor3 = Color3.fromRGB(150, 150, 150),
-                            TextSize = 14,
-                            TextXAlignment = Enum.TextXAlignment.Left,
+                            Name = "DropdownButtonText", BackgroundTransparency = 1, Position = UDim2.new(0, 6, 0, 0),
+                            Size = UDim2.new(0, 250, 1, 0), Font = Enum.Font.Ubuntu, Text = value.Dropdown,
+                            TextColor3 = Color3.fromRGB(150, 150, 150), TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left,
                         }, DropdownButton)
 
                         library:create("ImageLabel", {
-                            BackgroundTransparency = 1,
-                            Position = UDim2.new(0, 245, 0, 8),
-                            Size = UDim2.new(0, 6, 0, 4),
-                            Image = "rbxassetid://6724771531",
+                            BackgroundTransparency = 1, Position = UDim2.new(0, 245, 0, 8), Size = UDim2.new(0, 6, 0, 4), Image = "rbxassetid://6724771531",
                         }, DropdownButton)
 
                         local DropdownText = library:create("TextLabel", {
-                            Name = "DropdownText",
-                            BackgroundTransparency = 1,
-                            Position = UDim2.new(0, 9, 0, 6),
-                            Size = UDim2.new(0, 200, 0, 9),
-                            Font = Enum.Font.Ubuntu,
-                            Text = text,
-                            TextColor3 = Color3.fromRGB(150, 150, 150),
-                            TextSize = 14,
-                            TextXAlignment = Enum.TextXAlignment.Left,
+                            Name = "DropdownText", BackgroundTransparency = 1, Position = UDim2.new(0, 9, 0, 6),
+                            Size = UDim2.new(0, 200, 0, 9), Font = Enum.Font.Ubuntu, Text = text,
+                            TextColor3 = Color3.fromRGB(150, 150, 150), TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left,
                         }, Dropdown)
 
+                        -- 1. CORREÇÃO DE TAMANHO E CLIPAGEM (Aumentado para até 120px de altura max)
                         local DropdownScroll = library:create("ScrollingFrame", {
-                            Name = "DropdownScroll",
-                            Active = true,
-                            BackgroundColor3 = Color3.fromRGB(25, 25, 25),
-                            BorderColor3 = Color3.fromRGB(0, 0, 0),
-                            Position = UDim2.new(0, 9, 0, 41),
-                            Size = UDim2.new(0, 260, 0, 20),
-                            CanvasSize = UDim2.new(0, 0, 0, 0),
-                            ScrollBarThickness = 2,
-                            TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
-                            BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
-                            Visible = false,
-                            ZIndex = 2,
+                            Name = "DropdownScroll", Active = true, BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+                            BorderColor3 = Color3.fromRGB(0, 0, 0), Position = UDim2.new(0, 9, 0, 41),
+                            Size = UDim2.new(0, 260, 0, 120), CanvasSize = UDim2.new(0, 0, 0, 0),
+                            ScrollBarThickness = 3, ScrollingDirection = Enum.ScrollingDirection.Y,
+                            Visible = false, ZIndex = 5, ClipsDescendants = true
                         }, Dropdown)
 
-                        library:create("UIListLayout", {
-                            HorizontalAlignment = Enum.HorizontalAlignment.Center,
-                            SortOrder = Enum.SortOrder.LayoutOrder,
+                        local DropdownScrollLayout = library:create("UIListLayout", {
+                            HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder,
                         }, DropdownScroll)
 
+                        -- 2. CORREÇÃO DA ROLAGEM DINÂMICA (Atualiza o tamanho real da barra conforme os itens aumentam)
+                        DropdownScrollLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                            DropdownScroll.CanvasSize = UDim2.new(0, 0, 0, DropdownScrollLayout.AbsoluteContentSize.Y)
+                        end)
+
+                        -- Ajusta a janela visual: se tiver poucos itens fica pequeno, se tiver muitos limita a 120px e liga o Scroll
                         local options_num = #data.options
-                        if options_num >= 4 then
-                            DropdownScroll.Size = UDim2.new(0, 260, 0, 80)
-                            for i = 1, options_num do
-                                DropdownScroll.CanvasSize = DropdownScroll.CanvasSize + UDim2.new(0, 0, 0, 20)
-                            end
-                        else
+                        if options_num < 6 then
                             DropdownScroll.Size = UDim2.new(0, 260, 0, 20 * options_num)
+                        else
+                            DropdownScroll.Size = UDim2.new(0, 260, 0, 120)
                         end
 
-                        local in_drop, in_drop2, dropdown_open = false, false, false
-
-                        DropdownButton.MouseButton1Down:Connect(function()
+                        -- Usando .Activated para garantir resposta no Mobile sem travar
+                        DropdownButton.Activated:Connect(function()
                             DropdownScroll.Visible = not DropdownScroll.Visible
-                            dropdown_open = DropdownScroll.Visible
-                            local col = dropdown_open and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
-                            library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                            library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                        end)
-                        Dropdown.MouseEnter:Connect(function() in_drop = true end)
-                        Dropdown.MouseLeave:Connect(function() in_drop = false end)
-                        DropdownScroll.MouseEnter:Connect(function() in_drop2 = true end)
-                        DropdownScroll.MouseLeave:Connect(function() in_drop2 = false end)
-                        uis.InputBegan:Connect(function(input)
-                            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
-                                if DropdownScroll.Visible and not in_drop and not in_drop2 then
-                                    DropdownScroll.Visible = false
-                                    DropdownScroll.CanvasPosition = Vector2.new(0, 0)
-                                    library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
-                                    library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
-                                end
-                            end
+                            local col = DropdownScroll.Visible and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 150)
+                            library:tween(DropdownText, TweenInfo.new(0.2), {TextColor3 = col})
+                            library:tween(DropdownButtonText, TweenInfo.new(0.2), {TextColor3 = col})
                         end)
 
                         function element:set_value(new_value, cb)
                             value = new_value and new_value or value
                             menu.values[tab.tab_num][section_name][sector_name][flag] = value
-                            DropdownButtonText.Text = new_value.Dropdown
+                            DropdownButtonText.Text = value.Dropdown
                             if cb == nil or not cb then do_callback() end
                         end
 
-                        for _,v in next, data.options do
+                        for _, v in next, data.options do
                             local Button = library:create("TextButton", {
-                                Name = v, BackgroundColor3 = Color3.fromRGB(25,25,25), BorderSizePixel = 0,
-                                Size = UDim2.new(1,0,0,20), AutoButtonColor = false, Text = "", ZIndex = 2,
+                                Name = v, BackgroundColor3 = Color3.fromRGB(25, 25, 25), BorderSizePixel = 0,
+                                Size = UDim2.new(1, 0, 0, 20), AutoButtonColor = false, Text = "", ZIndex = 6,
                             }, DropdownScroll)
                             local ButtonText = library:create("TextLabel", {
-                                Name = "ButtonText", BackgroundTransparency = 1,
-                                Position = UDim2.new(0,8,0,0), Size = UDim2.new(0,245,1,0),
-                                Font = Enum.Font.Ubuntu, Text = v, TextColor3 = Color3.fromRGB(150,150,150),
-                                TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2,
+                                Name = "ButtonText", BackgroundTransparency = 1, Position = UDim2.new(0, 8, 0, 0), 
+                                Size = UDim2.new(0, 245, 1, 0), Font = Enum.Font.Ubuntu, Text = v, 
+                                TextColor3 = Color3.fromRGB(150, 150, 150), TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 6,
                             }, Button)
                             local Decoration = library:create("Frame", {
-                                Name = "Decoration", BackgroundColor3 = Color3.fromRGB(84,101,255),
-                                BorderSizePixel = 0, Size = UDim2.new(0,1,1,0), Visible = false, ZIndex = 2,
+                                Name = "Decoration", BackgroundColor3 = Color3.fromRGB(84, 101, 255),
+                                BorderSizePixel = 0, Size = UDim2.new(0, 1, 1, 0), Visible = false, ZIndex = 6,
                             }, Button)
+
                             Button.MouseEnter:Connect(function()
-                                library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)})
+                                library:tween(ButtonText, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 255, 255)})
                                 Decoration.Visible = true
                             end)
                             Button.MouseLeave:Connect(function()
-                                library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
+                                library:tween(ButtonText, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 150)})
                                 Decoration.Visible = false
                             end)
-                            Button.MouseButton1Down:Connect(function()
+                            
+                            -- 3. CORREÇÃO MOBILE PRINCIPAL: .Activated em vez de cliques antigos. Evita o travamento do deslize no celular.
+                            Button.Activated:Connect(function()
                                 DropdownScroll.Visible = false
                                 DropdownButtonText.Text = v
                                 value.Dropdown = v
-                                library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
-                                library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
+                                library:tween(DropdownText, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 150)})
+                                library:tween(DropdownButtonText, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 150)})
                                 do_callback()
                             end)
                         end
                         element:set_value(value, true)
-
-                    -- ==================== COMBO ====================
-                    elseif type == "Combo" then
-                        Border.Size = Border.Size + UDim2.new(0, 0, 0, 45)
-                        value = {Combo = default and default.Combo or {}}
-
-                        local Dropdown = library:create("TextLabel", {Name="Dropdown", BackgroundTransparency=1, Size=UDim2.new(1,0,0,45), Text=""}, Container)
-
-                        function element:set_visible(bool)
-                            if bool then
-                                if Dropdown.Visible then return end
-                                Border.Size = Border.Size + UDim2.new(0, 0, 0, 45)
-                                Dropdown.Visible = true
-                            else
-                                if not Dropdown.Visible then return end
-                                Border.Size = Border.Size + UDim2.new(0, 0, 0, -45)
-                                Dropdown.Visible = false
-                            end
-                        end
-
-                        local DropdownButton = library:create("TextButton", {
-                            Name="DropdownButton", BackgroundColor3=Color3.fromRGB(25,25,25), BorderColor3=Color3.fromRGB(0,0,0),
-                            Position=UDim2.new(0,9,0,20), Size=UDim2.new(0,260,0,20), AutoButtonColor=false, Text="",
-                        }, Dropdown)
-                        local DropdownButtonText = library:create("TextLabel", {
-                            Name="DropdownButtonText", BackgroundTransparency=1, Position=UDim2.new(0,6,0,0),
-                            Size=UDim2.new(0,250,1,0), Font=Enum.Font.Ubuntu, Text="", TextColor3=Color3.fromRGB(150,150,150),
-                            TextSize=14, TextXAlignment=Enum.TextXAlignment.Left,
-                        }, DropdownButton)
-                        library:create("ImageLabel", {BackgroundTransparency=1, Position=UDim2.new(0,245,0,8), Size=UDim2.new(0,6,0,4), Image="rbxassetid://6724771531"}, DropdownButton)
-                        local DropdownText = library:create("TextLabel", {
-                            Name="DropdownText", BackgroundTransparency=1, Position=UDim2.new(0,9,0,6),
-                            Size=UDim2.new(0,200,0,9), Font=Enum.Font.Ubuntu, Text=text,
-                            TextColor3=Color3.fromRGB(150,150,150), TextSize=14, TextXAlignment=Enum.TextXAlignment.Left,
-                        }, Dropdown)
-                        local DropdownScroll = library:create("ScrollingFrame", {
-                            Name="DropdownScroll", Active=true, BackgroundColor3=Color3.fromRGB(25,25,25),
-                            BorderColor3=Color3.fromRGB(0,0,0), Position=UDim2.new(0,9,0,41), Size=UDim2.new(0,260,0,20),
-                            CanvasSize=UDim2.new(0,0,0,0), ScrollBarThickness=2,
-                            TopImage="rbxasset://textures/ui/Scroll/scroll-middle.png",
-                            BottomImage="rbxasset://textures/ui/Scroll/scroll-middle.png",
-                            Visible=false, ZIndex=2,
-                        }, Dropdown)
-                        library:create("UIListLayout", {HorizontalAlignment=Enum.HorizontalAlignment.Center, SortOrder=Enum.SortOrder.LayoutOrder}, DropdownScroll)
-
-                        local options_num = #data.options
-                        if options_num >= 4 then
-                            DropdownScroll.Size = UDim2.new(0, 260, 0, 80)
-                            for i = 1, options_num do DropdownScroll.CanvasSize = DropdownScroll.CanvasSize + UDim2.new(0,0,0,20) end
-                        else
-                            DropdownScroll.Size = UDim2.new(0, 260, 0, 20 * options_num)
-                        end
-
-                        local in_drop, in_drop2 = false, false
-
-                        DropdownButton.MouseButton1Down:Connect(function()
-                            DropdownScroll.Visible = not DropdownScroll.Visible
-                            local col = DropdownScroll.Visible and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
-                            library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                            library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                        end)
-                        Dropdown.MouseEnter:Connect(function() in_drop = true end)
-                        Dropdown.MouseLeave:Connect(function() in_drop = false end)
-                        DropdownScroll.MouseEnter:Connect(function() in_drop2 = true end)
-                        DropdownScroll.MouseLeave:Connect(function() in_drop2 = false end)
-                        uis.InputBegan:Connect(function(input)
-                            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
-                                if DropdownScroll.Visible and not in_drop and not in_drop2 then
-                                    DropdownScroll.Visible = false
-                                    DropdownScroll.CanvasPosition = Vector2.new(0,0)
-                                    library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
-                                    library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
-                                end
-                            end
-                        end)
-
-                        function element.update_text()
-                            local options = {}
-                            for i,v in next, data.options do
-                                if table.find(value.Combo, v) then table.insert(options, v) end
-                            end
-                            local new_text = #options == 0 and "..." or options[1]
-                            if #options > 1 then
-                                for i,v in next, options do
-                                    if i == 1 then new_text = v
-                                    elseif i <= 3 then new_text = new_text..",  "..v
-                                    elseif i == 4 then new_text = new_text..",  ..."
-                                    end
-                                end
-                            end
-                            DropdownButtonText.Text = new_text
-                        end
-
-                        function element:set_value(new_value, cb)
-                            value = new_value and new_value or value
-                            menu.values[tab.tab_num][section_name][sector_name][flag] = value
-                            element.update_text()
-                            for _,DropButton in next, DropdownScroll:GetChildren() do
-                                if not DropButton:IsA("TextButton") then continue end
-                                local BT = DropButton.ButtonText
-                                if table.find(value.Combo, BT.Text) then
-                                    DropButton.Decoration.Visible = true
-                                    BT.TextColor3 = Color3.fromRGB(255,255,255)
-                                else
-                                    DropButton.Decoration.Visible = false
-                                    BT.TextColor3 = Color3.fromRGB(150,150,150)
-                                end
-                            end
-                            if cb == nil or not cb then do_callback() end
-                        end
-
-                        for _,v in next, data.options do
-                            local Button = library:create("TextButton", {
-                                Name=v, BackgroundColor3=Color3.fromRGB(25,25,25), BorderSizePixel=0,
-                                Size=UDim2.new(1,0,0,20), AutoButtonColor=false, Text="", ZIndex=2,
-                            }, DropdownScroll)
-                            local ButtonText = library:create("TextLabel", {
-                                Name="ButtonText", BackgroundTransparency=1, Position=UDim2.new(0,8,0,0),
-                                Size=UDim2.new(0,245,1,0), Font=Enum.Font.Ubuntu, Text=v,
-                                TextColor3=Color3.fromRGB(150,150,150), TextSize=14, TextXAlignment=Enum.TextXAlignment.Left, ZIndex=2,
-                            }, Button)
-                            local Decoration = library:create("Frame", {
-                                Name="Decoration", BackgroundColor3=Color3.fromRGB(84,101,255),
-                                BorderSizePixel=0, Size=UDim2.new(0,1,1,0), Visible=false, ZIndex=2,
-                            }, Button)
-                            Button.MouseEnter:Connect(function()
-                                if not table.find(value.Combo, v) then
-                                    library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(200,200,200)})
-                                end
-                            end)
-                            Button.MouseLeave:Connect(function()
-                                if not table.find(value.Combo, v) then
-                                    library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
-                                end
-                            end)
-                            Button.MouseButton1Down:Connect(function()
-                                if table.find(value.Combo, v) then
-                                    table.remove(value.Combo, table.find(value.Combo, v))
-                                    Decoration.Visible = false
-                                    library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
-                                else
-                                    table.insert(value.Combo, v)
-                                    library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)})
-                                    Decoration.Visible = true
-                                end
-                                element.update_text()
-                                do_callback()
-                            end)
-                        end
-                        element:set_value(value, true)
+                    end
 
                     -- ==================== BUTTON ====================
                     elseif type == "Button" then
