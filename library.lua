@@ -1135,27 +1135,57 @@ function library.new(library_title, cfg_location)
                             DropdownScroll.Size = UDim2.new(0, 260, 0, 20 * options_num)
                         end
 
-                        local in_drop, in_drop2, dropdown_open = false, false, false
+                        local dropdown_open = false
+                        -- in_drop: rastreia se o toque/cursor está sobre o dropdown ou scroll.
+                        -- No mobile usamos InputBegan no próprio elemento em vez de MouseEnter/Leave
+                        -- (que não disparam no touch).
+                        local in_drop, in_drop2 = false, false
 
-                        DropdownButton.MouseButton1Down:Connect(function()
+                        local function close_dropdown()
+                            DropdownScroll.Visible = false
+                            dropdown_open = false
+                            DropdownScroll.CanvasPosition = Vector2.new(0, 0)
+                            library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
+                            library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
+                        end
+
+                        -- Abre/fecha: funciona com mouse E touch
+                        DropdownButton.InputBegan:Connect(function(input)
+                            if input.UserInputType ~= Enum.UserInputType.MouseButton1
+                            and input.UserInputType ~= Enum.UserInputType.Touch then return end
                             DropdownScroll.Visible = not DropdownScroll.Visible
                             dropdown_open = DropdownScroll.Visible
                             local col = dropdown_open and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
                             library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
                             library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
                         end)
+
+                        -- Hover (desktop) — sem efeito no mobile, mas não causa problema
                         Dropdown.MouseEnter:Connect(function() in_drop = true end)
                         Dropdown.MouseLeave:Connect(function() in_drop = false end)
                         DropdownScroll.MouseEnter:Connect(function() in_drop2 = true end)
                         DropdownScroll.MouseLeave:Connect(function() in_drop2 = false end)
+
+                        -- No mobile: marca in_drop2=true quando o toque começa no scroll,
+                        -- evitando que o listener global feche antes de registrar a escolha
+                        DropdownScroll.InputBegan:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.Touch then
+                                in_drop2 = true
+                            end
+                        end)
+                        DropdownScroll.InputEnded:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.Touch then
+                                in_drop2 = false
+                            end
+                        end)
+
+                        -- Fecha ao clicar/tocar fora do dropdown
                         uis.InputBegan:Connect(function(input)
-                            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
-                                if DropdownScroll.Visible and not in_drop and not in_drop2 then
-                                    DropdownScroll.Visible = false
-                                    DropdownScroll.CanvasPosition = Vector2.new(0, 0)
-                                    library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
-                                    library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
-                                end
+                            local isClick = input.UserInputType == Enum.UserInputType.MouseButton1
+                                         or input.UserInputType == Enum.UserInputType.MouseButton2
+                                         or input.UserInputType == Enum.UserInputType.Touch
+                            if isClick and DropdownScroll.Visible and not in_drop and not in_drop2 then
+                                close_dropdown()
                             end
                         end)
 
@@ -1181,6 +1211,7 @@ function library.new(library_title, cfg_location)
                                 Name = "Decoration", BackgroundColor3 = Color3.fromRGB(84,101,255),
                                 BorderSizePixel = 0, Size = UDim2.new(0,1,1,0), Visible = false, ZIndex = 2,
                             }, Button)
+                            -- Hover (desktop)
                             Button.MouseEnter:Connect(function()
                                 library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)})
                                 Decoration.Visible = true
@@ -1189,12 +1220,16 @@ function library.new(library_title, cfg_location)
                                 library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
                                 Decoration.Visible = false
                             end)
-                            Button.MouseButton1Down:Connect(function()
-                                DropdownScroll.Visible = false
+                            -- Seleciona opção: funciona com mouse E touch
+                            Button.InputBegan:Connect(function(input)
+                                if input.UserInputType ~= Enum.UserInputType.MouseButton1
+                                and input.UserInputType ~= Enum.UserInputType.Touch then return end
+                                -- Feedback visual imediato no toque
+                                library:tween(ButtonText, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)})
+                                Decoration.Visible = true
+                                close_dropdown()
                                 DropdownButtonText.Text = v
                                 value.Dropdown = v
-                                library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
-                                library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
                                 do_callback()
                             end)
                         end
