@@ -921,8 +921,53 @@ function library.new(library_title, cfg_location)
                             color.v = 1
                             extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
                             menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
+                            
+                             
+                            local close_thread = nil
+                            local function reset_close_timer()
+                                if close_thread then task.cancel(close_thread) end
+                                close_thread = task.delay(5, function()
+                                    ColorFrame.Visible = false
+                                end)
+                            end
 
-                            -- Funções de update que aceitam x,y (funciona no mouse e no touch)
+                            function color.update_color(x, y)
+                                local ColorX = math.clamp((x - ColorPicker.AbsolutePosition.X) / ColorPicker.AbsoluteSize.X, 0, 1)
+                                local ColorY = math.clamp((y - ColorPicker.AbsolutePosition.Y) / ColorPicker.AbsoluteSize.Y, 0, 1)
+                                ColorPick.Position = UDim2.new(ColorX, 0, ColorY, 0)
+                                color.s = 1 - ColorX
+                                color.v = 1 - ColorY
+                                ColorButton.BackgroundColor3 = Color3.fromHSV(color.h, color.s, color.v)
+                                extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
+                                color_callback(extra_value)
+                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
+                                reset_close_timer()
+                            end
+
+                            function color.update_hue(x, y)
+                                local yPos = math.clamp(y - HuePicker.AbsolutePosition.Y, 0, 148)
+                                HuePick.Position = UDim2.new(0, 0, 0, yPos)
+                                color.h = 1 - (yPos / 148)
+                                ColorPicker.ImageColor3 = Color3.fromHSV(color.h, 1, 1)
+                                ColorButton.BackgroundColor3 = Color3.fromHSV(color.h, color.s, color.v)
+                                if TransparencyColor then
+                                    TransparencyColor.ImageColor3 = Color3.fromHSV(color.h, 1, 1)
+                                end
+                                extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
+                                color_callback(extra_value)
+                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
+                                reset_close_timer() -- Inicia/Reseta o timer
+                            end
+
+                            function color.update_transp(x, y)
+                                local xPos = math.clamp(x - TransparencyPicker.AbsolutePosition.X, 0, 180)
+                                TransparencyPick.Position = UDim2.new(0, xPos, 0, 0)
+                                extra_value.Transparency = xPos / 180
+                                color_callback(extra_value)
+                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
+                                reset_close_timer() -- Inicia/Reseta o timer
+                            end
+                            
                             function color.update_color(x, y)
                                 local ColorX = math.clamp((x - ColorPicker.AbsolutePosition.X) / ColorPicker.AbsoluteSize.X, 0, 1)
                                 local ColorY = math.clamp((y - ColorPicker.AbsolutePosition.Y) / ColorPicker.AbsoluteSize.Y, 0, 1)
@@ -1612,36 +1657,31 @@ function library.new(library_title, cfg_location)
                             if release_connection then release_connection:Disconnect() end
                         end
 
-                        if uis.TouchEnabled then
-                            SliderButton.InputBegan:Connect(function(input)
-                                if input.UserInputType ~= Enum.UserInputType.Touch then return end
+                                                SliderButton.InputBegan:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                 is_sliding = true
                                 update_slider(input.Position.X)
-                                move_connection = input.Changed:Connect(function()
-                                    if input.UserInputState == Enum.UserInputState.End then
-                                        stop_sliding()
-                                        return
-                                    end
-                                    if is_sliding then
-                                        update_slider(input.Position.X)
+                                
+                                
+                                if move_connection then move_connection:Disconnect() end
+                                if release_connection then release_connection:Disconnect() end
+                                
+                                move_connection = uis.InputChanged:Connect(function(move_input)
+                                    if move_input.UserInputType == Enum.UserInputType.MouseMovement or move_input.UserInputType == Enum.UserInputType.Touch then
+                                        if is_sliding then
+                                            update_slider(move_input.Position.X)
+                                        end
                                     end
                                 end)
-                            end)
-                        else
-                            SliderButton.MouseButton1Down:Connect(function()
-                                is_sliding = true
-                                update_slider(mouse.X)
-                                move_connection = mouse.Move:Connect(function()
-                                    update_slider(mouse.X)
-                                end)
-                                release_connection = uis.InputEnded:Connect(function(Mouse)
-                                    if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
-                                        update_slider(mouse.X)
+                                
+                                release_connection = uis.InputEnded:Connect(function(end_input)
+                                    if end_input.UserInputType == Enum.UserInputType.MouseButton1 or end_input.UserInputType == Enum.UserInputType.Touch then
                                         stop_sliding()
                                     end
                                 end)
-                            end)
-                        end
+                            end
+                        end)
+
 
                         function element:set_value(new_value, cb)
                             value = new_value and new_value or value
