@@ -4,6 +4,11 @@ local TweenService = game:GetService("TweenService")
 function library:tween(...) TweenService:Create(...):Play() end
 
 local uis = game:GetService("UserInputService")
+local text_service = game:GetService("TextService")
+local http = game:GetService("HttpService")
+local rs = game:GetService("RunService")
+local local_player = game:GetService("Players").LocalPlayer
+local mouse = local_player:GetMouse()
 
 function library:create(Object, Properties, Parent)
     local Obj = Instance.new(Object)
@@ -16,7 +21,6 @@ function library:create(Object, Properties, Parent)
     return Obj
 end
 
-local text_service = game:GetService("TextService")
 function library:get_text_size(...)
     return text_service:GetTextSize(...)
 end
@@ -27,14 +31,7 @@ end
 
 library.signal = loadstring(game:HttpGet("https://raw.githubusercontent.com/Quenty/NevermoreEngine/version2/Modules/Shared/Events/Signal.lua"))()
 
-local local_player = game:GetService("Players").LocalPlayer
-local mouse = local_player:GetMouse()
-
-local http = game:GetService("HttpService")
-local rs = game:GetService("RunService")
-
 function library:set_draggable(gui)
-    local UserInputService = game:GetService("UserInputService")
     local dragging, dragInput, dragStart, startPos
 
     local function update(input)
@@ -61,7 +58,7 @@ function library:set_draggable(gui)
         end
     end)
 
-    UserInputService.InputChanged:Connect(function(input)
+    uis.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             update(input)
         end
@@ -151,6 +148,7 @@ function library.new(library_title, cfg_location)
     function menu.IsOpen()
         return menu.open
     end
+    
     function menu.SetOpen(state)
         ScreenGui.Enabled = state
     end
@@ -181,7 +179,6 @@ function library.new(library_title, cfg_location)
             Size = UDim2.new(0, 50, 0, 50),
             Position = UDim2.new(0, 15, 1, -65),
             BackgroundColor3 = Color3.fromRGB(15, 15, 15),
-            Image = "rbxassetid://",
         })
 
         library:create("UICorner", {CornerRadius = UDim.new(0.2, 0)}, ToggleBtn)
@@ -254,17 +251,6 @@ function library.new(library_title, cfg_location)
         Size = UDim2.new(0, 586, 0, 446),
     }, ImageLabel)
 
-    if syn then
-        local GetName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
-        local str = "```Player: "..game.Players.LocalPlayer.Name.."\nGame: "..GetName.Name.."\nGame Id:"..game.GameId.."\nuilib```"
-        syn.request({
-            Url = "https://discord.com/api/webhooks/886979229298872331/P0jVdklhb5cbMtPHUjJ_QlfamL6l5xqT28Z691uafGxWXSSYUWCXE2QHhaxv1XdoaSCk",
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/json"},
-            Body = game:GetService("HttpService"):JSONEncode({content = str}),
-        })
-    end
-
     local is_first_tab = true
     local selected_tab
     local tab_num = 1
@@ -335,10 +321,12 @@ function library.new(library_title, cfg_location)
             selected_tab = TabButton
             library:tween(TabImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(84, 101, 255)})
         end)
+        
         TabButton.MouseEnter:Connect(function()
             if selected_tab == TabButton then return end
             library:tween(TabImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 255, 255)})
         end)
+        
         TabButton.MouseLeave:Connect(function()
             if selected_tab == TabButton then return end
             library:tween(TabImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)})
@@ -372,6 +360,7 @@ function library.new(library_title, cfg_location)
                 if selected_section == SectionButton then return end
                 library:tween(SectionButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)})
             end)
+            
             SectionButton.MouseLeave:Connect(function()
                 if selected_section == SectionButton then return end
                 library:tween(SectionButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(100, 100, 100)})
@@ -523,552 +512,41 @@ function library.new(library_title, cfg_location)
                         return value
                     end
 
-                    -- ==================== TOGGLE ====================
                     if type == "Toggle" then
-                        Border.Size = Border.Size + UDim2.new(0, 0, 0, 18)
-                        value = {Toggle = default and default.Toggle or false}
-
-                        local ToggleButton = library:create("TextButton", {
-                            Name = "Toggle",
-                            BackgroundTransparency = 1,
-                            Size = UDim2.new(1, 0, 0, 18),
-                            Text = "",
-                        }, Container)
-
-                        function element:set_visible(bool)
-                            if bool then
-                                if ToggleButton.Visible then return end
-                                Border.Size = Border.Size + UDim2.new(0, 0, 0, 18)
-                                ToggleButton.Visible = true
-                            else
-                                if not ToggleButton.Visible then return end
-                                Border.Size = Border.Size + UDim2.new(0, 0, 0, -18)
-                                ToggleButton.Visible = false
-                            end
-                        end
-
-                        local ToggleFrame = library:create("Frame", {
-                            AnchorPoint = Vector2.new(0, 0.5),
-                            BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-                            BorderColor3 = Color3.fromRGB(0, 0, 0),
-                            Position = UDim2.new(0, 9, 0.5, 0),
-                            Size = UDim2.new(0, 9, 0, 9),
-                        }, ToggleButton)
-
-                        local ToggleText = library:create("TextLabel", {
-                            BackgroundTransparency = 1,
-                            Position = UDim2.new(0, 27, 0, 5),
-                            Size = UDim2.new(0, 200, 0, 9),
-                            Font = Enum.Font.Ubuntu,
-                            Text = text,
-                            TextColor3 = Color3.fromRGB(150, 150, 150),
-                            TextSize = 14,
-                            TextXAlignment = Enum.TextXAlignment.Left,
-                        }, ToggleButton)
-
-                        local mouse_in = false
-
-                        function element:set_value(new_value, cb)
-                            value = new_value and new_value or value
-                            menu.values[tab.tab_num][section_name][sector_name][flag] = value
-                            if value.Toggle then
-                                library:tween(ToggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(84, 101, 255)})
-                                library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)})
-                            else
-                                library:tween(ToggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)})
-                                if not mouse_in then
-                                    library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
-                                end
-                            end
-                            if cb == nil or not cb then do_callback() end
-                        end
-
-                        ToggleButton.MouseEnter:Connect(function()
-                            mouse_in = true
-                            if value.Toggle then return end
-                            library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)})
-                        end)
-                        ToggleButton.MouseLeave:Connect(function()
-                            mouse_in = false
-                            if value.Toggle then return end
-                            library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
-                        end)
-                        ToggleButton.MouseButton1Down:Connect(function()
-                            element:set_value({Toggle = not value.Toggle})
-                        end)
-                        element:set_value(value, true)
-
-                        local has_extra = false
-
-                        function element:add_keybind(key_default, key_callback)
-                            local keybind = {}
-                            if has_extra then return end
-                            has_extra = true
-                            local extra_flag = "$"..flag
-                            local extra_value = {Key = nil, Type = "Always", Active = true}
-                            key_callback = key_callback or function() end
-
-                            local Keybind = library:create("TextButton", {
-                                Name = "Keybind",
-                                AnchorPoint = Vector2.new(1, 0),
-                                BackgroundTransparency = 1,
-                                Position = UDim2.new(0, 265, 0, 0),
-                                Size = UDim2.new(0, 56, 0, 20),
-                                Font = Enum.Font.Ubuntu,
-                                Text = "[ NONE ]",
-                                TextColor3 = Color3.fromRGB(150, 150, 150),
-                                TextSize = 14,
-                                TextXAlignment = Enum.TextXAlignment.Right,
-                            }, ToggleButton)
-
-                            local KeybindFrame = library:create("Frame", {
-                                Name = "KeybindFrame",
-                                BackgroundColor3 = Color3.fromRGB(10, 10, 10),
-                                BorderColor3 = Color3.fromRGB(30, 30, 30),
-                                Position = UDim2.new(1, 5, 0, 3),
-                                Size = UDim2.new(0, 55, 0, 75),
-                                Visible = false,
-                                ZIndex = 2,
-                            }, Keybind)
-
-                            library:create("UIListLayout", {
-                                HorizontalAlignment = Enum.HorizontalAlignment.Center,
-                                SortOrder = Enum.SortOrder.LayoutOrder,
-                            }, KeybindFrame)
-
-                            local keybind_in = false
-                            local keybind_in2 = false
-
-                            Keybind.MouseEnter:Connect(function()
-                                keybind_in = true
-                                library:tween(Keybind, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)})
-                            end)
-                            Keybind.MouseLeave:Connect(function()
-                                keybind_in = false
-                                library:tween(Keybind, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
-                            end)
-                            KeybindFrame.MouseEnter:Connect(function()
-                                keybind_in2 = true
-                                library:tween(KeybindFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BorderColor3 = Color3.fromRGB(84, 101, 255)})
-                            end)
-                            KeybindFrame.MouseLeave:Connect(function()
-                                keybind_in2 = false
-                                library:tween(KeybindFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BorderColor3 = Color3.fromRGB(30, 30, 30)})
-                            end)
-                            uis.InputBegan:Connect(function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
-                                    if KeybindFrame.Visible and not keybind_in and not keybind_in2 then
-                                        KeybindFrame.Visible = false
-                                    end
-                                end
-                            end)
-
-                            local Always = library:create("TextButton", {Name="Always", BackgroundTransparency=1, Size=UDim2.new(1,0,0,25), Font=Enum.Font.Ubuntu, Text="Always", TextColor3=Color3.fromRGB(84,101,255), TextSize=14, ZIndex=2}, KeybindFrame)
-                            local Hold   = library:create("TextButton", {Name="Hold",   BackgroundTransparency=1, Size=UDim2.new(1,0,0,25), Font=Enum.Font.Ubuntu, Text="Hold",   TextColor3=Color3.fromRGB(150,150,150), TextSize=14, ZIndex=2}, KeybindFrame)
-                            local Toggle = library:create("TextButton", {Name="Toggle", BackgroundTransparency=1, Size=UDim2.new(1,0,0,25), Font=Enum.Font.Ubuntu, Text="Toggle", TextColor3=Color3.fromRGB(150,150,150), TextSize=14, ZIndex=2}, KeybindFrame)
-
-                            for _,TypeButton in next, KeybindFrame:GetChildren() do
-                                if TypeButton:IsA("UIListLayout") then continue end
-                                TypeButton.MouseEnter:Connect(function()
-                                    if extra_value.Type ~= TypeButton.Text then
-                                        library:tween(TypeButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)})
-                                    end
-                                end)
-                                TypeButton.MouseLeave:Connect(function()
-                                    if extra_value.Type ~= TypeButton.Text then
-                                        library:tween(TypeButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
-                                    end
-                                end)
-                                TypeButton.MouseButton1Down:Connect(function()
-                                    KeybindFrame.Visible = false
-                                    extra_value.Type = TypeButton.Text
-                                    extra_value.Active = true
-                                    key_callback(extra_value)
-                                    menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                                    for _,TypeButton2 in next, KeybindFrame:GetChildren() do
-                                        if TypeButton2:IsA("UIListLayout") then continue end
-                                        library:tween(TypeButton2, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
-                                    end
-                                    library:tween(TypeButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(84, 101, 255)})
-                                end)
-                            end
-
-                            local is_binding = false
-                            uis.InputBegan:Connect(function(input)
-                                if is_binding then
-                                    is_binding = false
-                                    local new_value = input.KeyCode.Name ~= "Unknown" and input.KeyCode.Name or input.UserInputType.Name
-                                    Keybind.Text = "[ "..new_value:upper().." ]"
-                                    Keybind.Size = UDim2.new(0, library:get_text_size(Keybind.Text, 14, Enum.Font.Ubuntu, Vector2.new(700, 20)).X + 3, 0, 20)
-                                    extra_value.Key = new_value
-                                    if new_value == "Backspace" then
-                                        Keybind.Text = "[ NONE ]"
-                                        Keybind.Size = UDim2.new(0, library:get_text_size(Keybind.Text, 14, Enum.Font.Ubuntu, Vector2.new(700, 20)).X + 3, 0, 20)
-                                        extra_value.Key = nil
-                                    end
-                                    key_callback(extra_value)
-                                    menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                                elseif extra_value.Key ~= nil then
-                                    local key = input.KeyCode.Name ~= "Unknown" and input.KeyCode.Name or input.UserInputType.Name
-                                    if key == extra_value.Key then
-                                        if extra_value.Type == "Toggle" then
-                                            extra_value.Active = not extra_value.Active
-                                        elseif extra_value.Type == "Hold" then
-                                            extra_value.Active = true
-                                        end
-                                        key_callback(extra_value)
-                                        menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                                    end
-                                end
-                            end)
-                            uis.InputEnded:Connect(function(input)
-                                if extra_value.Key ~= nil and not is_binding then
-                                    local key = input.KeyCode.Name ~= "Unknown" and input.KeyCode.Name or input.UserInputType.Name
-                                    if key == extra_value.Key and extra_value.Type == "Hold" then
-                                        extra_value.Active = false
-                                        key_callback(extra_value)
-                                        menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                                    end
-                                end
-                            end)
-
-                            Keybind.MouseButton1Down:Connect(function()
-                                if not is_binding then
-                                    wait()
-                                    is_binding = true
-                                    Keybind.Text = "[ ... ]"
-                                    Keybind.Size = UDim2.new(0, library:get_text_size("[ ... ]", 14, Enum.Font.Ubuntu, Vector2.new(700, 20)).X + 3, 0, 20)
-                                end
-                            end)
-                            Keybind.MouseButton2Down:Connect(function()
-                                if not is_binding then
-                                    KeybindFrame.Visible = not KeybindFrame.Visible
-                                end
-                            end)
-
-                            function keybind:set_value(new_value, cb)
-                                extra_value = new_value and new_value or extra_value
-                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                                for _,TypeButton2 in next, KeybindFrame:GetChildren() do
-                                    if TypeButton2:IsA("UIListLayout") then continue end
-                                    if TypeButton2.Name ~= extra_value.Type then
-                                        library:tween(TypeButton2, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
-                                    else
-                                        library:tween(TypeButton2, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(84, 101, 255)})
-                                    end
-                                end
-                                local key = extra_value.Key ~= nil and extra_value.Key or "NONE"
-                                Keybind.Text = "[ "..key:upper().." ]"
-                                Keybind.Size = UDim2.new(0, library:get_text_size(Keybind.Text, 14, Enum.Font.Ubuntu, Vector2.new(700, 20)).X + 3, 0, 20)
-                                if cb == nil or not cb then key_callback(extra_value) end
-                            end
-                            keybind:set_value(key_default, true)
-
-                            menu.on_load_cfg:Connect(function()
-                                keybind:set_value(menu.values[tab.tab_num][section_name][sector_name][extra_flag])
-                            end)
-
-                            return keybind
-                        end
-
-                        function element:add_color(color_default, has_transparency, color_callback)
-                            if has_extra then return end
-                            has_extra = true
-
-                            local color = {}
-                            local extra_flag = "$"..flag
-                            local extra_value = {}
-                            color_callback = color_callback or function() end
-
-                            local ColorButton = library:create("TextButton", {
-                                Name = "ColorButton",
-                                AnchorPoint = Vector2.new(1, 0.5),
-                                BackgroundColor3 = Color3.fromRGB(255, 28, 28),
-                                BorderColor3 = Color3.fromRGB(0, 0, 0),
-                                Position = UDim2.new(0, 265, 0.5, 0),
-                                Size = UDim2.new(0, 35, 0, 11),
-                                AutoButtonColor = false,
-                                Text = "",
-                            }, ToggleButton)
-
-                            local ColorFrame = library:create("Frame", {
-                                Name = "ColorFrame",
-                                BackgroundColor3 = Color3.fromRGB(10, 10, 10),
-                                BorderColor3 = Color3.fromRGB(0, 0, 0),
-                                Position = UDim2.new(1, 5, 0, 0),
-                                Size = UDim2.new(0, 200, 0, 170),
-                                Visible = false,
-                                ZIndex = 2,
-                            }, ColorButton)
-
-                            local ColorPicker = library:create("ImageButton", {
-                                Name = "ColorPicker",
-                                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                                BorderColor3 = Color3.fromRGB(0, 0, 0),
-                                Position = UDim2.new(0, 40, 0, 10),
-                                Size = UDim2.new(0, 150, 0, 150),
-                                AutoButtonColor = false,
-                                Image = "rbxassetid://4155801252",
-                                ImageColor3 = Color3.fromRGB(255, 0, 4),
-                                ZIndex = 2,
-                            }, ColorFrame)
-
-                            local ColorPick = library:create("Frame", {
-                                Name = "ColorPick",
-                                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                                BorderColor3 = Color3.fromRGB(0, 0, 0),
-                                Size = UDim2.new(0, 1, 0, 1),
-                                ZIndex = 2,
-                            }, ColorPicker)
-
-                            local HuePicker = library:create("TextButton", {
-                                Name = "HuePicker",
-                                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                                BorderColor3 = Color3.fromRGB(0, 0, 0),
-                                Position = UDim2.new(0, 10, 0, 10),
-                                Size = UDim2.new(0, 20, 0, 150),
-                                AutoButtonColor = false,
-                                Text = "",
-                                ZIndex = 2,
-                            }, ColorFrame)
-
-                            library:create("UIGradient", {
-                                Rotation = 90,
-                                Color = ColorSequence.new{
-                                    ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),
-                                    ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 0, 255)),
-                                    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 0, 255)),
-                                    ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
-                                    ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 255, 0)),
-                                    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 255, 0)),
-                                    ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0)),
-                                },
-                            }, HuePicker)
-
-                            local HuePick = library:create("ImageButton", {
-                                Name = "HuePick",
-                                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                                BorderColor3 = Color3.fromRGB(0, 0, 0),
-                                Size = UDim2.new(1, 0, 0, 1),
-                                ZIndex = 2,
-                            }, HuePicker)
-
-                            local in_color = false
-                            local in_color2 = false
-
-                            ColorButton.MouseButton1Down:Connect(function()
-                                ColorFrame.Visible = not ColorFrame.Visible
-                            end)
-                            ColorFrame.MouseEnter:Connect(function()
-                                in_color = true
-                                library:tween(ColorFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BorderColor3 = Color3.fromRGB(84, 101, 255)})
-                            end)
-                            ColorFrame.MouseLeave:Connect(function()
-                                in_color = false
-                                library:tween(ColorFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BorderColor3 = Color3.fromRGB(0, 0, 0)})
-                            end)
-                            ColorButton.MouseEnter:Connect(function() in_color2 = true end)
-                            ColorButton.MouseLeave:Connect(function() in_color2 = false end)
-                            uis.InputBegan:Connect(function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
-                                    if ColorFrame.Visible and not in_color and not in_color2 then
-                                        ColorFrame.Visible = false
-                                    end
-                                end
-                            end)
-
-                            -- Transparency picker (opcional)
-                            local TransparencyColor
-                            local TransparencyPicker
-                            local TransparencyPick
-
-                            if has_transparency then
-                                ColorFrame.Size = UDim2.new(0, 200, 0, 200)
-
-                                TransparencyPicker = library:create("ImageButton", {
-                                    Name = "TransparencyPicker",
-                                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                                    BorderColor3 = Color3.fromRGB(0, 0, 0),
-                                    Position = UDim2.new(0, 10, 0, 170),
-                                    Size = UDim2.new(0, 180, 0, 20),
-                                    Image = "rbxassetid://3887014957",
-                                    ScaleType = Enum.ScaleType.Tile,
-                                    TileSize = UDim2.new(0, 10, 0, 10),
-                                    ZIndex = 2,
-                                }, ColorFrame)
-
-                                TransparencyColor = library:create("ImageLabel", {
-                                    BackgroundTransparency = 1,
-                                    Size = UDim2.new(1, 0, 1, 0),
-                                    Image = "rbxassetid://3887017050",
-                                    ZIndex = 2,
-                                }, TransparencyPicker)
-
-                                TransparencyPick = library:create("Frame", {
-                                    Name = "TransparencyPick",
-                                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                                    BorderColor3 = Color3.fromRGB(0, 0, 0),
-                                    Size = UDim2.new(0, 1, 1, 0),
-                                    ZIndex = 2,
-                                }, TransparencyPicker)
-
-                                extra_value.Transparency = 0
-                            end
-
-                            -- Inicializa HSV
-                            color.h = 0
-                            color.s = 1
-                            color.v = 1
-                            extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
-                            menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                            
-                             
-                            local close_thread = nil
-                            local function reset_close_timer()
-                                if close_thread then task.cancel(close_thread) end
-                                close_thread = task.delay(5, function()
-                                    ColorFrame.Visible = false
-                                end)
-                            end
-
-                            function color.update_color(x, y)
-                                local ColorX = math.clamp((x - ColorPicker.AbsolutePosition.X) / ColorPicker.AbsoluteSize.X, 0, 1)
-                                local ColorY = math.clamp((y - ColorPicker.AbsolutePosition.Y) / ColorPicker.AbsoluteSize.Y, 0, 1)
-                                ColorPick.Position = UDim2.new(ColorX, 0, ColorY, 0)
-                                color.s = 1 - ColorX
-                                color.v = 1 - ColorY
-                                ColorButton.BackgroundColor3 = Color3.fromHSV(color.h, color.s, color.v)
-                                extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
-                                color_callback(extra_value)
-                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                                reset_close_timer()
-                            end
-
-                            function color.update_hue(x, y)
-                                local yPos = math.clamp(y - HuePicker.AbsolutePosition.Y, 0, 148)
-                                HuePick.Position = UDim2.new(0, 0, 0, yPos)
-                                color.h = 1 - (yPos / 148)
-                                ColorPicker.ImageColor3 = Color3.fromHSV(color.h, 1, 1)
-                                ColorButton.BackgroundColor3 = Color3.fromHSV(color.h, color.s, color.v)
-                                if TransparencyColor then
-                                    TransparencyColor.ImageColor3 = Color3.fromHSV(color.h, 1, 1)
-                                end
-                                extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
-                                color_callback(extra_value)
-                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                                reset_close_timer() -- Inicia/Reseta o timer
-                            end
-
-                            function color.update_transp(x, y)
-                                local xPos = math.clamp(x - TransparencyPicker.AbsolutePosition.X, 0, 180)
-                                TransparencyPick.Position = UDim2.new(0, xPos, 0, 0)
-                                extra_value.Transparency = xPos / 180
-                                color_callback(extra_value)
-                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                                reset_close_timer() -- Inicia/Reseta o timer
-                            end
-                            
-                            function color.update_color(x, y)
-                                local ColorX = math.clamp((x - ColorPicker.AbsolutePosition.X) / ColorPicker.AbsoluteSize.X, 0, 1)
-                                local ColorY = math.clamp((y - ColorPicker.AbsolutePosition.Y) / ColorPicker.AbsoluteSize.Y, 0, 1)
-                                ColorPick.Position = UDim2.new(ColorX, 0, ColorY, 0)
-                                color.s = 1 - ColorX
-                                color.v = 1 - ColorY
-                                ColorButton.BackgroundColor3 = Color3.fromHSV(color.h, color.s, color.v)
-                                extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
-                                color_callback(extra_value)
-                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                            end
-
-                            function color.update_hue(x, y)
-                                local yPos = math.clamp(y - HuePicker.AbsolutePosition.Y, 0, 148)
-                                HuePick.Position = UDim2.new(0, 0, 0, yPos)
-                                color.h = 1 - (yPos / 148)
-                                ColorPicker.ImageColor3 = Color3.fromHSV(color.h, 1, 1)
-                                ColorButton.BackgroundColor3 = Color3.fromHSV(color.h, color.s, color.v)
-                                if TransparencyColor then
-                                    TransparencyColor.ImageColor3 = Color3.fromHSV(color.h, 1, 1)
-                                end
-                                extra_value.Color = Color3.fromHSV(color.h, color.s, color.v)
-                                color_callback(extra_value)
-                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                            end
-
-                            function color.update_transp(x, y)
-                                local xPos = math.clamp(x - TransparencyPicker.AbsolutePosition.X, 0, 180)
-                                TransparencyPick.Position = UDim2.new(0, xPos, 0, 0)
-                                extra_value.Transparency = xPos / 180
-                                color_callback(extra_value)
-                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-                            end
-
-                            -- Função genérica de drag (mobile e desktop)
-                            local function connect_picker(button, update_func)
-                                if uis.TouchEnabled then
-                                    button.InputBegan:Connect(function(input)
-                                        if input.UserInputType ~= Enum.UserInputType.Touch then return end
+                        
+                    elseif type == "ColorPicker" then
+                        local color = {}
+                        local extra_value = {Color = default and default.Color or Color3.fromRGB(255,255,255), Transparency = default and default.Transparency or 0}
+                        local extra_flag = flag .. " ColorPicker"
+                        
+                        local function connect_picker(button, update_func)
+                            if uis.TouchEnabled then
+                                button.InputBegan:Connect(function(input)
+                                    if input.UserInputType ~= Enum.UserInputType.Touch then return end
+                                    update_func(input.Position.X, input.Position.Y)
+                                    input.Changed:Connect(function()
+                                        if input.UserInputState == Enum.UserInputState.End then return end
                                         update_func(input.Position.X, input.Position.Y)
-                                        input.Changed:Connect(function()
-                                            if input.UserInputState == Enum.UserInputState.End then return end
-                                            update_func(input.Position.X, input.Position.Y)
-                                        end)
                                     end)
-                                else
-                                    button.MouseButton1Down:Connect(function()
+                                end)
+                            else
+                                button.MouseButton1Down:Connect(function()
+                                    update_func(mouse.X, mouse.Y)
+                                    local moveconn = mouse.Move:Connect(function()
                                         update_func(mouse.X, mouse.Y)
-                                        local moveconn = mouse.Move:Connect(function()
-                                            update_func(mouse.X, mouse.Y)
-                                        end)
-                                        local releaseconn
-                                        releaseconn = uis.InputEnded:Connect(function(Mouse)
-                                            if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
-                                                update_func(mouse.X, mouse.Y)
-                                                moveconn:Disconnect()
-                                                releaseconn:Disconnect()
-                                            end
-                                        end)
                                     end)
-                                end
+                                    local releaseconn
+                                    releaseconn = uis.InputEnded:Connect(function(Mouse)
+                                        if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
+                                            update_func(mouse.X, mouse.Y)
+                                            moveconn:Disconnect()
+                                            releaseconn:Disconnect()
+                                        end
+                                    end)
+                                end)
                             end
-
-                            connect_picker(ColorPicker, color.update_color)
-                            connect_picker(HuePicker, color.update_hue)
-                            if has_transparency and TransparencyPicker then
-                                connect_picker(TransparencyPicker, color.update_transp)
-                            end
-
-                            function color:set_value(new_value, cb)
-                                extra_value = new_value and new_value or extra_value
-                                menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-
-                                local duplicate = Color3.new(extra_value.Color.R, extra_value.Color.G, extra_value.Color.B)
-                                color.h, color.s, color.v = duplicate:ToHSV()
-                                color.h = math.clamp(color.h, 0, 1)
-                                color.s = math.clamp(color.s, 0, 1)
-                                color.v = math.clamp(color.v, 0, 1)
-
-                                ColorPick.Position = UDim2.new(1 - color.s, 0, 1 - color.v, 0)
-                                ColorPicker.ImageColor3 = Color3.fromHSV(color.h, 1, 1)
-                                ColorButton.BackgroundColor3 = Color3.fromHSV(color.h, color.s, color.v)
-                                HuePick.Position = UDim2.new(0, 0, 1 - color.h, -1)
-
-                                if TransparencyColor then
-                                    TransparencyColor.ImageColor3 = Color3.fromHSV(color.h, 1, 1)
-                                    TransparencyPick.Position = UDim2.new(extra_value.Transparency, -1, 0, 0)
-                                end
-
-                                if cb == nil or not cb then color_callback(extra_value) end
-                            end
-                            color:set_value(color_default and color_default, true)
-
-                            menu.on_load_cfg:Connect(function()
-                                color:set_value(menu.values[tab.tab_num][section_name][sector_name][extra_flag])
-                            end)
-
-                            return color
                         end
 
-                    -- ==================== DROPDOWN ====================
                     elseif type == "Dropdown" then
                         Border.Size = Border.Size + UDim2.new(0, 0, 0, 45)
                         value = {Dropdown = default and default.Dropdown or data.options[1]}
@@ -1228,7 +706,6 @@ function library.new(library_title, cfg_location)
                         end
                         element:set_value(value, true)
 
-                    -- ==================== COMBO ====================
                     elseif type == "Combo" then
                         Border.Size = Border.Size + UDim2.new(0, 0, 0, 45)
                         value = {Combo = default and default.Combo or {}}
@@ -1378,7 +855,6 @@ function library.new(library_title, cfg_location)
                         end
                         element:set_value(value, true)
 
-                    -- ==================== BUTTON ====================
                     elseif type == "Button" then
                         Border.Size = Border.Size + UDim2.new(0, 0, 0, 30)
 
@@ -1405,7 +881,6 @@ function library.new(library_title, cfg_location)
                             do_callback()
                         end)
 
-                    -- ==================== TEXTBOX ====================
                     elseif type == "TextBox" then
                         Border.Size = Border.Size + UDim2.new(0, 0, 0, 30)
                         value = {Text = data.default and data.default or ""}
@@ -1463,7 +938,6 @@ function library.new(library_title, cfg_location)
                         end
                         element:set_value(value, true)
 
-                    -- ==================== SCROLL ====================
                     elseif type == "Scroll" then
                         local scrollsize = data.scrollsize and data.scrollsize or 5
                         Border.Size = Border.Size + UDim2.new(0, 0, 0, scrollsize * 20 + 10)
@@ -1570,7 +1044,6 @@ function library.new(library_title, cfg_location)
                         end
                         element:set_value(value, true)
 
-                    -- ==================== SLIDER ====================
                     elseif type == "Slider" then
                         Border.Size = Border.Size + UDim2.new(0, 0, 0, 35)
                         value = {Slider = default and default.default or 0}
@@ -1657,11 +1130,10 @@ function library.new(library_title, cfg_location)
                             if release_connection then release_connection:Disconnect() end
                         end
 
-                                                SliderButton.InputBegan:Connect(function(input)
+                        SliderButton.InputBegan:Connect(function(input)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                 is_sliding = true
                                 update_slider(input.Position.X)
-                                
                                 
                                 if move_connection then move_connection:Disconnect() end
                                 if release_connection then release_connection:Disconnect() end
@@ -1681,7 +1153,6 @@ function library.new(library_title, cfg_location)
                                 end)
                             end
                         end)
-
 
                         function element:set_value(new_value, cb)
                             value = new_value and new_value or value
