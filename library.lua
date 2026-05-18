@@ -181,38 +181,49 @@ end
         end
 	end)
 	
-	if uis.TouchEnabled then
-    -- Criamos uma ScreenGui separada para o botão não sumir quando escondermos o menu principal
-    local MobileToggleGui = library:create("ScreenGui", {
-        Name = "MobileToggleGui",
-        ResetOnSpawn = false,
-        ZIndexBehavior = Enum.ZIndexBehavior.Global,
-    })
-    MobileToggleGui.Parent = game:GetService("CoreGui")
+		if uis.TouchEnabled then
+        -- Criamos uma ScreenGui separada para o botão não sumir quando escondermos o menu principal
+        local MobileToggleGui = library:create("ScreenGui", {
+            Name = "MobileToggleGui",
+            ResetOnSpawn = false,
+            ZIndexBehavior = Enum.ZIndexBehavior.Global,
+        })
+        MobileToggleGui.Parent = game:GetService("CoreGui")
 
-    if syn then syn.protect_gui(MobileToggleGui) end
+        if syn then syn.protect_gui(MobileToggleGui) end
 
-    local ToggleBtn = library:create("TextButton", {
-        Name = "ToggleBtn",
-        Parent = MobileToggleGui,
-        Size = UDim2.new(0, 45, 0, 45),
-        Position = UDim2.new(0.5, -22, 0, 15), -- Fica no topo da tela
-        BackgroundColor3 = Color3.fromRGB(15, 15, 15),
-        BorderColor3 = Color3.fromRGB(78, 93, 234),
-        Text = "MENU",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.Ubuntu,
-        TextSize = 12
-    })
-    
-    -- Deixa o botão de abrir/fechar arrastável para não atrapalhar o jogo
-    library:set_draggable(ToggleBtn)
+        -- Mudamos para ImageButton para aceitar a sua foto personalizada
+        local ToggleBtn = library:create("ImageButton", {
+            Name = "ToggleBtn",
+            Parent = MobileToggleGui,
+            Size = UDim2.new(0, 50, 0, 50),
+            Position = UDim2.new(0, 15, 1, -65), -- Posição: Lado inferior esquerdo
+            BackgroundColor3 = Color3.fromRGB(15, 15, 15),
+            -- Coloque o ID da sua imagem aqui abaixo:
+            Image = "rbxassetid://SEU_ID_DE_IMAGEM_AQUI", 
+        })
+        
+        -- Adicionando Bordas Arredondadas
+        library:create("UICorner", {
+            CornerRadius = UDim.new(0.2, 0) -- Altere 0.2 para 1 se quiser um botão 100% redondo (círculo perfeito)
+        }, ToggleBtn)
+        
+        -- Adicionando a Borda Azul (UIStroke é necessário quando se usa bordas arredondadas)
+        library:create("UIStroke", {
+            Color = Color3.fromRGB(78, 93, 234),
+            Thickness = 2,
+            ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        }, ToggleBtn)
 
-    ToggleBtn.MouseButton1Click:Connect(function()
-        ScreenGui.Enabled = not ScreenGui.Enabled
-        menu.open = ScreenGui.Enabled
-    end)
-end
+        -- Deixa o botão de abrir/fechar arrastável para não atrapalhar o jogo
+        library:set_draggable(ToggleBtn)
+
+        ToggleBtn.MouseButton1Click:Connect(function()
+            ScreenGui.Enabled = not ScreenGui.Enabled
+            menu.open = ScreenGui.Enabled
+        end)
+    end
+
 
 
 local ImageLabel = library:create("ImageButton", {
