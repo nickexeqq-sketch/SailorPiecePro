@@ -220,7 +220,16 @@ function library.new(library_title, cfg_location)
         return ImageLabel.Position
     end
 
-    library:set_draggable(ImageLabel)
+    -- draggable removido do hub principal
+
+    local DragBar = library:create("Frame", {
+        Name = "DragBar",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, 32),
+        Position = UDim2.new(0,0,0,0),
+    }, ImageLabel)
+
+    library:set_draggable(DragBar)
 
     local Title = library:create("TextLabel", {
         Name = "Title",
@@ -1104,17 +1113,17 @@ function library.new(library_title, cfg_location)
 
                         DropdownScroll.ScrollingDirection = Enum.ScrollingDirection.Y
                         DropdownScroll.ElasticBehavior = Enum.ElasticBehavior.Always
+                        DropdownScroll.ScrollBarThickness = 6
+                        DropdownScroll.Active = true
+                        DropdownScroll.Selectable = true
 
 
                         local in_drop, in_drop2, dropdown_open = false, false, false
 
                         DropdownButton.MouseButton1Down:Connect(function()
                             DropdownScroll.Visible = not DropdownScroll.Visible
-                            dropdown_open = DropdownScroll.Visible
-                            local col = dropdown_open and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
-                            library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                            library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
-                        end)
+                            DropdownScroll.CanvasPosition = Vector2.new(0,0)
+                            DropdownScroll.ScrollingEnabled = true
                         Dropdown.MouseEnter:Connect(function() in_drop = true end)
                         Dropdown.MouseLeave:Connect(function() in_drop = false end)
                         DropdownScroll.MouseEnter:Connect(function() in_drop2 = true end)
