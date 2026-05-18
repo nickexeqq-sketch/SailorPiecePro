@@ -1136,10 +1136,6 @@ function library.new(library_title, cfg_location)
                         end
 
                         local dropdown_open = false
-                        -- in_drop: rastreia se o toque/cursor está sobre o dropdown ou scroll.
-                        -- No mobile usamos InputBegan no próprio elemento em vez de MouseEnter/Leave
-                        -- (que não disparam no touch).
-                        local in_drop, in_drop2 = false, false
 
                         local function close_dropdown()
                             DropdownScroll.Visible = false
@@ -1147,6 +1143,14 @@ function library.new(library_title, cfg_location)
                             DropdownScroll.CanvasPosition = Vector2.new(0, 0)
                             library:tween(DropdownText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
                             library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)})
+                        end
+
+                        -- Checa se o ponto (px, py) está dentro de um GuiObject
+                        local function hit(frame, px, py)
+                            local p = frame.AbsolutePosition
+                            local s = frame.AbsoluteSize
+                            return px >= p.X and px <= p.X + s.X
+                               and py >= p.Y and py <= p.Y + s.Y
                         end
 
                         -- Abre/fecha: funciona com mouse E touch
@@ -1160,31 +1164,20 @@ function library.new(library_title, cfg_location)
                             library:tween(DropdownButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = col})
                         end)
 
-                        -- Hover (desktop) — sem efeito no mobile, mas não causa problema
-                        Dropdown.MouseEnter:Connect(function() in_drop = true end)
-                        Dropdown.MouseLeave:Connect(function() in_drop = false end)
-                        DropdownScroll.MouseEnter:Connect(function() in_drop2 = true end)
-                        DropdownScroll.MouseLeave:Connect(function() in_drop2 = false end)
+                        -- Hover desktop (sem efeito no mobile)
+                        Dropdown.MouseEnter:Connect(function() end)
+                        Dropdown.MouseLeave:Connect(function() end)
 
-                        -- No mobile: marca in_drop2=true quando o toque começa no scroll,
-                        -- evitando que o listener global feche antes de registrar a escolha
-                        DropdownScroll.InputBegan:Connect(function(input)
-                            if input.UserInputType == Enum.UserInputType.Touch then
-                                in_drop2 = true
-                            end
-                        end)
-                        DropdownScroll.InputEnded:Connect(function(input)
-                            if input.UserInputType == Enum.UserInputType.Touch then
-                                in_drop2 = false
-                            end
-                        end)
-
-                        -- Fecha ao clicar/tocar fora do dropdown
+                        -- Fecha ao tocar/clicar fora usando hit-test de posição.
+                        -- Isso evita a race condition onde flags baseadas em eventos
+                        -- chegavam na ordem errada e fechavam o scroll ao rolar.
                         uis.InputBegan:Connect(function(input)
                             local isClick = input.UserInputType == Enum.UserInputType.MouseButton1
                                          or input.UserInputType == Enum.UserInputType.MouseButton2
                                          or input.UserInputType == Enum.UserInputType.Touch
-                            if isClick and DropdownScroll.Visible and not in_drop and not in_drop2 then
+                            if not isClick or not DropdownScroll.Visible then return end
+                            local px, py = input.Position.X, input.Position.Y
+                            if not hit(DropdownScroll, px, py) and not hit(DropdownButton, px, py) then
                                 close_dropdown()
                             end
                         end)
@@ -1211,7 +1204,7 @@ function library.new(library_title, cfg_location)
                                 Name = "Decoration", BackgroundColor3 = Color3.fromRGB(84,101,255),
                                 BorderSizePixel = 0, Size = UDim2.new(0,1,1,0), Visible = false, ZIndex = 2,
                             }, Button)
-                            -- Hover (desktop)
+                            -- Hover desktop
                             Button.MouseEnter:Connect(function()
                                 library:tween(ButtonText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)})
                                 Decoration.Visible = true
@@ -1224,9 +1217,6 @@ function library.new(library_title, cfg_location)
                             Button.InputBegan:Connect(function(input)
                                 if input.UserInputType ~= Enum.UserInputType.MouseButton1
                                 and input.UserInputType ~= Enum.UserInputType.Touch then return end
-                                -- Feedback visual imediato no toque
-                                library:tween(ButtonText, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)})
-                                Decoration.Visible = true
                                 close_dropdown()
                                 DropdownButtonText.Text = v
                                 value.Dropdown = v
